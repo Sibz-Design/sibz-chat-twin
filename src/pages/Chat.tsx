@@ -50,40 +50,81 @@ export default function Chat() {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response (in real implementation, this would call Cohere API)
-    setTimeout(() => {
-      const aiResponse: Message = {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ message: messageText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      let assistantMessage = '';
+      const assistantMessageId = (Date.now() + 1).toString();
+
+      // Add initial empty assistant message
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        content: '',
+        role: 'assistant',
+        timestamp: new Date(),
+      }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              setIsLoading(false);
+              return;
+            }
+            
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                assistantMessage += parsed.content;
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: assistantMessage }
+                    : msg
+                ));
+              }
+            } catch (e) {
+              // Ignore parsing errors for incomplete chunks
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: generateMockResponse(messageText),
+        content: "Sorry, I'm having trouble connecting right now. Please try again in a moment!",
         role: 'assistant',
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000 + Math.random() * 2000);
+    }
   };
 
-  const generateMockResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes('who are you') || lowerQuery.includes('about')) {
-      return "Hi! I'm Tamashi Sibabalwe Desemela, an AI and backend developer passionate about building impactful projects. I specialize in Python, Flask, Node.js, and AI technologies like Cohere and Hugging Face. I love creating clean, efficient code and exploring the intersection of AI and web development. Check out my work at github.com/Sibz-Design!";
-    }
-    
-    if (lowerQuery.includes('project') || lowerQuery.includes('work')) {
-      return "I've built several exciting projects! Some highlights include AI-powered web applications, backend APIs with Flask and Node.js, and machine learning integrations. My portfolio showcases projects ranging from chat applications to data processing systems. You can explore all my repositories at github.com/Sibz-Design where I share my latest innovations.";
-    }
-    
-    if (lowerQuery.includes('tech') || lowerQuery.includes('skill') || lowerQuery.includes('stack')) {
-      return "My tech stack includes: Backend - Python, Flask, Node.js, Express; AI/ML - Cohere API, Hugging Face, TensorFlow; Frontend - React, Next.js, TypeScript, Tailwind CSS; Databases - PostgreSQL, MongoDB, Redis; Cloud - Vercel, AWS, Docker. I'm always learning new technologies to stay at the cutting edge!";
-    }
-    
-    if (lowerQuery.includes('experience') || lowerQuery.includes('background')) {
-      return "I have several years of experience in full-stack development with a focus on backend systems and AI integration. I've worked on projects ranging from small startups to enterprise solutions, always focusing on scalable architecture and clean code. My passion lies in creating intelligent applications that solve real-world problems.";
-    }
-    
-    return "That's a great question! I'm here to help you learn more about my skills, projects, and experience in AI and backend development. Feel free to ask me about my tech stack, specific projects, or anything else you'd like to know about my work. You can also check out my repositories at github.com/Sibz-Design for a deeper dive into my code!";
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
