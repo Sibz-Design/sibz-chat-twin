@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot, Send, Sparkles } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+<<<<<<< HEAD
 import sharedImage from "@/assets/shared _image.jpg";
+=======
+import tamashiAvatar from "@/assets/tamashi-avatar.jpg";
+>>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
 
 const suggestedQuestions = [
   "Who are you?",
@@ -44,7 +48,11 @@ export function HeroSection() {
             <div className="relative">
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 shadow-glow">
                 <img 
+<<<<<<< HEAD
                   src={sharedImage} 
+=======
+                  src={tamashiAvatar} 
+>>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
                   alt="Tamashi Sibabalwe Desemela" 
                   className="w-full h-full object-cover"
                 />
@@ -63,12 +71,23 @@ export function HeroSection() {
             <p className="text-xl md:text-2xl text-muted-foreground mb-2">
               Chat with My Digital Twin
             </p>
+<<<<<<< HEAD
             
+=======
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <Sparkles className="w-5 h-5" />
+              <span className="text-sm font-medium">Powered by Cohere AI</span>
+            </div>
+>>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
           </div>
 
           {/* Description */}
           <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed">
+<<<<<<< HEAD
             Meet Sibabalwe Desemela - IT Support & AI/ML Enthusaist. 
+=======
+            Meet Tamashi Sibabalwe Desemela - AI & Backend Developer. 
+>>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
             Ask me anything about my skills, projects, and experience. 
             I'll respond just like the real me would.
           </p>

@@ -11,7 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+<<<<<<< HEAD
 supabase/.env.local
+=======
+>>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
 
 # Editor directories and files
 .vscode/*
