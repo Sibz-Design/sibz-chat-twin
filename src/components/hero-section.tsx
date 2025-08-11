@@ -4,11 +4,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot, Send, Sparkles } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
-<<<<<<< HEAD
 import sharedImage from "@/assets/shared _image.jpg";
-=======
-import tamashiAvatar from "@/assets/tamashi-avatar.jpg";
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
+
 
 const suggestedQuestions = [
   "Who are you?",
@@ -48,12 +45,8 @@ export function HeroSection() {
             <div className="relative">
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20 shadow-glow">
                 <img 
-<<<<<<< HEAD
-                  src={sharedImage} 
-=======
-                  src={tamashiAvatar} 
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
-                  alt="Tamashi Sibabalwe Desemela" 
+                  src={sharedImage}  
+                  alt="Sibabalwe Desemela" 
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -71,23 +64,16 @@ export function HeroSection() {
             <p className="text-xl md:text-2xl text-muted-foreground mb-2">
               Chat with My Digital Twin
             </p>
-<<<<<<< HEAD
-            
-=======
             <div className="flex items-center justify-center gap-2 text-primary">
               <Sparkles className="w-5 h-5" />
-              <span className="text-sm font-medium">Powered by Cohere AI</span>
+              <span className="text-sm font-medium"></span>
             </div>
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
           </div>
 
           {/* Description */}
           <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed">
-<<<<<<< HEAD
-            Meet Sibabalwe Desemela - IT Support & AI/ML Enthusaist. 
-=======
-            Meet Tamashi Sibabalwe Desemela - AI & Backend Developer. 
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
+
+            Meet Sibabalwe Desemela - IT Support & AI/ML Enthusaist.  
             Ask me anything about my skills, projects, and experience. 
             I'll respond just like the real me would.
           </p>
@@ -130,17 +116,6 @@ export function HeroSection() {
           </div>
 
           {/* Features */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center p-6 rounded-lg bg-card/30 backdrop-blur-sm border border-border/30">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Bot className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">AI-Powered</h3>
-              <p className="text-sm text-muted-foreground">
-                Real-time responses powered by Cohere AI that mirror Tamashi's personality
-              </p>
-            </div>
-            
             <div className="text-center p-6 rounded-lg bg-card/30 backdrop-blur-sm border border-border/30">
               <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-primary-foreground" />
@@ -162,7 +137,6 @@ export function HeroSection() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
+</section>
   );
 }
