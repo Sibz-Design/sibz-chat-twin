@@ -85,13 +85,13 @@ export default function Chat() {
     }
 
     try {
-      console.log('Making request to:', `${supabaseUrl}/functions/v1/chat`);
+      console.log('Making request to:', `${supabaseUrl}/functions/v1/ai-chat-function`);
       
       const response = await fetch(`${supabaseUrl}/functions/v1/ai-chat-function`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey.trim()}`,
+          'Authorization': `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({ message: messageText }),
       });
@@ -105,8 +105,11 @@ export default function Chat() {
         throw new Error(`Server responded with ${response.status}: ${errorText}`);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
+      // Check if response is actually streaming
+      const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
+      
+      if (!response.body) {
         throw new Error('No response body');
       }
 
@@ -123,46 +126,71 @@ export default function Chat() {
         }]);
       }
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-        const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n');
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            console.log('Stream completed');
+            break;
+          }
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              if (isMounted.current) {
-                setIsLoading(false);
-              }
-              return;
-            }
+          buffer += decoder.decode(value, { stream: true });
+          console.log('Received chunk:', buffer);
+          
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
             
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                assistantMessage += parsed.content;
+            console.log('Processing line:', trimmedLine);
+            
+            if (trimmedLine.startsWith('data: ')) {
+              const data = trimmedLine.slice(6).trim();
+              console.log('Data:', data);
+              
+              if (data === '[DONE]') {
+                console.log('Stream finished');
                 if (isMounted.current) {
-                  setMessages(prev => prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: assistantMessage } 
-                      : msg
-                  ));
+                  setIsLoading(false);
                 }
-              } else if (parsed.error) {
-                throw new Error(parsed.error);
+                return;
               }
-            } catch (e) {
-              if (data.includes('error')) {
-                console.error('Server error in stream:', data);
-                throw new Error('Server error occurred');
+              
+              if (data && data !== '') {
+                try {
+                  const parsed = JSON.parse(data);
+                  console.log('Parsed data:', parsed);
+                  
+                  if (parsed.content) {
+                    assistantMessage += parsed.content;
+                    if (isMounted.current) {
+                      setMessages(prev => prev.map(msg => 
+                        msg.id === assistantMessageId 
+                          ? { ...msg, content: assistantMessage } 
+                          : msg
+                      ));
+                    }
+                  } else if (parsed.error) {
+                    throw new Error(parsed.error);
+                  }
+                } catch (parseError) {
+                  console.error('JSON parse error:', parseError, 'Data:', data);
+                  // Don't throw here, continue processing
+                }
               }
-              // Ignore parsing errors for incomplete chunks
             }
           }
         }
+      } finally {
+        reader.releaseLock();
       }
     } catch (error) {
       console.error('Error details:', error);
@@ -180,7 +208,7 @@ export default function Chat() {
         setIsLoading(false);
       }
     }
-  }, [input, isLoading, setMessages, setInput, setIsLoading]);
+  }, [input, isLoading]);
 
   useEffect(() => {
     const initialQuery = searchParams.get("query");
@@ -189,6 +217,19 @@ export default function Chat() {
       setHasInitialQueryBeenHandled(true);
     }
   }, [searchParams, handleSendMessage, hasInitialQueryBeenHandled]);
+
+  // Prevent default form submission that might cause navigation
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessage();
+  };
     
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -270,23 +311,23 @@ export default function Chat() {
       {/* Input */}
       <div className="border-t border-border bg-card/50 backdrop-blur-sm p-6">
         <div className="container mx-auto max-w-4xl">
-          <div className="flex gap-3">
+          <form onSubmit={handleSubmit} className="flex gap-3">
             <Input
               placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyPress={handleKeyPress}
               className="flex-1 bg-background"
               disabled={isLoading}
             />
             <Button 
+              type="submit"
               variant="hero" 
-              onClick={() => handleSendMessage()}
               disabled={!input.trim() || isLoading}
             >
               <Send className="w-4 h-4" />
             </Button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

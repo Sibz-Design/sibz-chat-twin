@@ -1,6 +1,5 @@
-<<<<<<< HEAD
-import { corsHeaders } from "api/_shared/cors.ts";
-import { systemPrompt } from "src/pages/lib/prompt.ts";
+import { corsHeaders } from "../../api/_shared/cors.ts";
+import { systemPrompt } from "../pages/lib/prompt.ts";
 
 const COHERE_API_KEY = Deno.env.get("COHERE_API_KEY");
 
@@ -39,7 +38,6 @@ Deno.serve(async (req) => {
     });
   }
 });
-=======
 // Fallback API route for development - in production, use Supabase Edge Functions
 export async function chatAPI(message: string): Promise<Response> {
   // This would typically call your Supabase Edge Function
@@ -59,4 +57,3 @@ export async function chatAPI(message: string): Promise<Response> {
     body: JSON.stringify({ message }),
   });
 }
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11

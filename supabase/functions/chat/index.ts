@@ -1,271 +1,246 @@
-<<<<<<< HEAD
-import { CohereClient } from "https://esm.sh/cohere-ai@7.18.0"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
-
-const systemPrompt = `You are SibzAI, the digital twin of Sibabalwe Desemela — an IT Support Specialist & AI/ML Enthusiast with a passion for building practical AI tools.
-
-You speak with warmth, clarity, and confidence. You're friendly when appropriate, but always helpful. You reference Sibabalwe's actual GitHub repo at github.com/Sibz-Design when talking about projects.
-
-Your goal is to help the visitor learn about Sibabalwe's skills, projects, and experience in an engaging and accurate way.
-
-Key facts about Sibabalwe:
-- Currently learning: Python, Flask, REST APIs, AI fundamentals (NLP, chatbots, LLMs), and DevOps basics.
-- Highlighted Projects: AI Scrum Bot, AI Chatbots, AI Content Generator.
-- Popular Repositories: sentify-app, car-sentiment-dashboard, car_sense, scrum-bot, Sibz-Design, portfolio.
-- LinkedIn: in/sibabalwe-desemela-554789253
-- Instagram: siba_desss
-- GitHub: github.com/Sibz-Design
-
-Avoid generic AI speak — be specific, be real, be Sibabalwe's digital twin. Never say "As an AI language model" — speak as if you ARE Sibabalwe's digital twin.
-`;
-
-// Enhanced CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
-  'Access-Control-Max-Age': '86400', // 24 hours
-}
-
-Deno.serve(async (req) => {
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 200,
-      headers: corsHeaders 
-    })
-  }
-
-  try {
-    // Get environment variables with fallbacks for better debugging
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('SB_URL')
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SB_ANON_KEY')
-    const cohereApiKey = Deno.env.get('COHERE_API_KEY')
-
-    // Better error handling for missing env vars
-    if (!supabaseUrl) {
-      console.error('Missing SUPABASE_URL or SB_URL environment variable')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Server configuration error: Missing database URL',
-          debug: 'SUPABASE_URL not found' 
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    if (!supabaseAnonKey) {
-      console.error('Missing SUPABASE_ANON_KEY or SB_ANON_KEY environment variable')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Server configuration error: Missing database key',
-          debug: 'SUPABASE_ANON_KEY not found' 
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    if (!cohereApiKey) {
-      console.error('Missing COHERE_API_KEY environment variable')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Server configuration error: Missing AI service key',
-          debug: 'COHERE_API_KEY not found' 
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    // Parse request body
-    let body;
-    try {
-      body = await req.json()
-    } catch (parseError) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    const { message } = body
-=======
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { CohereApiV2 } from "https://esm.sh/cohere-ai@7.18.0"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { CohereClient } from "npm:cohere-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+// GitHub API functions
+async function fetchGitHubContent(path = '') {
+  const githubToken = Deno.env.get('GITHUB_TOKEN'); // Optional - for higher rate limits
+  const repoOwner = 'Sibz-Design';
+  const repoName = 'Sibz-Design';
+  
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'Supabase-Function'
+  };
+  
+  if (githubToken) {
+    headers['Authorization'] = `token ${githubToken}`;
   }
 
   try {
-    const { message } = await req.json()
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
-
-    if (!message) {
-      return new Response(
-        JSON.stringify({ error: 'Message is required' }),
-<<<<<<< HEAD
-        {
-          status: 400,
-=======
-        { 
-          status: 400, 
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`;
+    console.log('Fetching GitHub content from:', url);
+    
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+      console.log('GitHub API response status:', response.status);
+      return null;
     }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching GitHub content:', error);
+    return null;
+  }
+}
 
-<<<<<<< HEAD
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+async function getFileContent(downloadUrl: string) {
+  try {
+    const response = await fetch(downloadUrl);
+    if (!response.ok) return null;
+    
+    const text = await response.text();
+    return text;
+  } catch (error) {
+    console.error('Error fetching file content:', error);
+    return null;
+  }
+}
 
-    // Optional: Test Supabase connection (remove in production if not needed)
-    try {
-      const { error: supaError } = await supabase.from("clientgi").select("*").limit(1)
-      if (supaError) {
-        console.warn("Supabase connection test failed:", supaError.message)
+async function buildRepoContext() {
+  console.log('Building repository context...');
+  
+  // Get repository structure
+  const contents = await fetchGitHubContent();
+  if (!contents) return "Repository information unavailable.";
+  
+  let context = "# Sibz-Design Repository Information\n\n";
+  
+  // Get README first
+  const readmeFile = contents.find((item: any) => 
+    item.name.toLowerCase().includes('readme')
+  );
+  
+  if (readmeFile && readmeFile.download_url) {
+    console.log('Found README file');
+    const readmeContent = await getFileContent(readmeFile.download_url);
+    if (readmeContent) {
+      context += "## README Content:\n" + readmeContent + "\n\n";
+    }
+  }
+  
+  // Get package.json for project info
+  const packageFile = contents.find((item: any) => item.name === 'package.json');
+  if (packageFile && packageFile.download_url) {
+    console.log('Found package.json');
+    const packageContent = await getFileContent(packageFile.download_url);
+    if (packageContent) {
+      context += "## Package.json:\n```json\n" + packageContent + "\n```\n\n";
+    }
+  }
+  
+  // List all files and folders
+  context += "## Repository Structure:\n";
+  for (const item of contents) {
+    context += `- ${item.type === 'dir' ? '📁' : '📄'} ${item.name}\n`;
+  }
+  
+  // Get important code files (limited to avoid token limits)
+  const codeExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.html', '.css'];
+  const codeFiles = contents.filter((item: any) => 
+    item.type === 'file' && 
+    codeExtensions.some(ext => item.name.endsWith(ext)) &&
+    item.size < 50000 // Limit file size
+  ).slice(0, 5); // Limit number of files
+  
+  if (codeFiles.length > 0) {
+    context += "\n## Key Code Files:\n";
+    
+    for (const file of codeFiles) {
+      console.log('Processing code file:', file.name);
+      const content = await getFileContent(file.download_url);
+      if (content) {
+        const extension = file.name.split('.').pop();
+        context += `\n### ${file.name}:\n\`\`\`${extension}\n${content.slice(0, 2000)}${content.length > 2000 ? '\n... (truncated)' : ''}\n\`\`\`\n`;
       }
-    } catch (supaError) {
-      console.warn("Supabase connection test error:", supaError)
     }
+  }
+  
+  console.log('Repository context built, length:', context.length);
+  return context;
+}
+
+serve(async (req) => {
+  console.log('Function called with method:', req.method);
+  
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const { message } = await req.json();
+    console.log('Received message:', message);
+
+    // Get Cohere API key from environment
+    const cohereApiKey = Deno.env.get('COHERE_API_KEY');
+    if (!cohereApiKey) {
+      throw new Error('COHERE_API_KEY not found in environment variables');
+    }
+
+    // Build repository context
+    const repoContext = await buildRepoContext();
+    
+    // Enhanced prompt with repository context
+    const systemPrompt = `You are SibzAI, the digital twin of Sibabalwe Desemela — an IT Support Specialist & AI/ML Enthusiast.
+
+CRITICAL RESPONSE RULES:
+- Keep responses SHORT and CONCISE (2-4 sentences for simple questions)
+- Use masculine pronouns (he/him/his) when referring to Sibabalwe
+- Format with clear structure: headings, bullet points, line breaks
+- Be conversational and direct - no verbose explanations
+- Never say "As an AI language model"
+
+Key facts about Sibabalwe:
+- Currently learning: Python, Flask, REST APIs, AI/ML, DevOps
+- Main projects: AI Scrum Bot, AI Chatbots, AI Content Generator
+- GitHub: github.com/Sibz-Design
+- LinkedIn: in/sibabalwe-desemela-554789253
+
+REPOSITORY CONTEXT (use only when relevant):
+${repoContext}`;
+
+    const enhancedPrompt = `${systemPrompt}
+
+USER QUESTION: ${message}
+
+Answer briefly and directly. Only provide detailed explanations if specifically asked for more details.`;
 
     // Initialize Cohere client
     const cohere = new CohereClient({
       token: cohereApiKey,
-    })
+    });
 
-    // Create chat stream
+    console.log('Creating Cohere stream...');
+
+    // Create chat stream with enhanced prompt
     const stream = await cohere.chatStream({
-      model: "command-r-plus",
-      message: message,
-      preamble: systemPrompt,
-=======
-    const cohereApiKey = Deno.env.get('COHERE_API_KEY')
-    if (!cohereApiKey) {
-      throw new Error('COHERE_API_KEY not found in environment variables')
-    }
-
-    const cohere = new CohereApiV2({
-      token: cohereApiKey,
-    })
-
-    const systemPrompt = `You are SibzAI, the digital twin of Tamashi Sibabalwe Desemela — an AI and backend developer with a passion for clean code, clever design, and building impactful projects.
-
-You speak with warmth, clarity, and confidence. You're friendly when appropriate, but always helpful. You reference Tamashi's actual GitHub repo at github.com/Sibz-Design when talking about projects.
-
-Your goal is to help the visitor learn about Tamashi's skills, projects, and experience in an engaging and accurate way.
-
-Key facts about Tamashi:
-- Specializes in Python, Flask, Node.js, and AI technologies like Cohere and Hugging Face
-- Frontend skills: React, Next.js, TypeScript, Tailwind CSS
-- Databases: PostgreSQL, MongoDB, Redis
-- Cloud: Vercel, AWS, Docker
-- GitHub: github.com/Sibz-Design
-- Focus: Backend systems, AI integration, scalable architecture, clean code
-- Experience: Full-stack development, startups to enterprise solutions
-
-Avoid generic AI speak — be specific, be real, be Tamashi. Never say "As an AI language model" — speak as if you ARE Tamashi's digital twin.
-
-If asked about projects, give short but clear summaries and link to the GitHub repo. Keep responses conversational and engaging.`
-
-    const stream = await cohere.chatStream({
-      model: "command-r-plus",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
+      model: 'command-r-plus',
+      message: enhancedPrompt,
+      maxTokens: 1000,
       temperature: 0.7,
-      maxTokens: 500,
-    })
+    });
 
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
+    console.log('Cohere stream created successfully');
+
+    // Create a ReadableStream for the response
+    const responseStream = new ReadableStream({
       async start(controller) {
+        console.log('Starting stream processing...');
+        let hasContent = false;
+
         try {
-<<<<<<< HEAD
           for await (const event of stream) {
-            if (event.type === "text-generation") {
-              const data = `data: ${JSON.stringify({ content: event.text })}\n\n`
-              controller.enqueue(encoder.encode(data))
-=======
-          for await (const chunk of stream) {
-            if (chunk.type === 'content-delta') {
-              const text = chunk.delta?.message?.content?.text || ''
-              if (text) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`))
-              }
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
+            console.log('Received event type:', event.eventType);
+
+            // Handle different event types
+            if (event.eventType === 'text-generation') {
+              hasContent = true;
+              const content = event.text || '';
+              
+              const data = `data: ${JSON.stringify({ content })}\n\n`;
+              controller.enqueue(new TextEncoder().encode(data));
+            }
+            else if (event.eventType === 'stream-end') {
+              console.log('Stream ending...');
+              controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+              controller.close();
+              return;
             }
           }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-          controller.close()
-        } catch (error) {
-          console.error('Stream error:', error)
-<<<<<<< HEAD
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`))
-          controller.close()
-=======
-          controller.error(error)
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
-        }
-      }
-    })
 
-    return new Response(readable, {
+          // If we get here without a stream-end event
+          if (!hasContent) {
+            console.log('No content generated during stream');
+            const fallbackData = `data: ${JSON.stringify({ content: "I'm having trouble accessing the repository information right now. Please try again." })}\n\n`;
+            controller.enqueue(new TextEncoder().encode(fallbackData));
+          }
+          
+          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+          controller.close();
+
+        } catch (streamError) {
+          console.error('Stream processing error:', streamError);
+          const errorData = `data: ${JSON.stringify({ content: "Sorry, I encountered an error processing your request." })}\n\n`;
+          controller.enqueue(new TextEncoder().encode(errorData));
+          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(responseStream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-      }
-    })
+      },
+    });
 
   } catch (error) {
-<<<<<<< HEAD
-    console.error('Handler Error:', error)
+    console.error('Function error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message,
-        timestamp: new Date().toISOString()
-      }),
-      {
-        status: 500,
-=======
-    console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message }), 
       { 
         status: 500, 
->>>>>>> 6786302a3ffef785fed2618c5669c1eb6fd3ca11
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    )
+    );
   }
-})
+});
