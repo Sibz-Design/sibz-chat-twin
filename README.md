@@ -1,5 +1,7 @@
 # Sibz Chat Twin 🤖
 
+Live demo: [`sibz-chat-twin.vercel.app`](https://sibz-chat-twin.vercel.app/)
+
 An intelligent AI chatbot application that serves as the digital twin of Sibabalwe Desemela. Built with React, TypeScript, and powered by Supabase Edge Functions and Cohere AI, this chatbot provides contextual responses about Sibabalwe's work, projects, and expertise by dynamically fetching information from his GitHub repositories.
 
 ## ✨ Features
@@ -7,7 +9,9 @@ An intelligent AI chatbot application that serves as the digital twin of Sibabal
 - **AI-Powered Conversations** - Intelligent responses powered by Cohere's Command-R-Plus model
 - **GitHub Integration** - Dynamically fetches repository context for accurate project discussions
 - **Real-time Streaming** - Server-sent events for smooth, real-time chat experience
-- **Digital Twin Technology** - Personalized responses that reflect Sibabalwe's expertise and personality
+- **Visual Sections** - Projects and Certificates render as rich cards (no API call needed for quick actions or queries containing "project")
+- **Polished Chat UI** - Linkified text, code blocks, copy-to-clipboard, sticky Home/Back bar
+- **Contact & CTAs** - Certificates button (Google Drive) and Contact Me section with mailto fallback + LinkedIn
 - **Modern UI/UX** - Clean, responsive design with shadcn/ui components
 - **TypeScript Support** - Type-safe development throughout the stack
 - **Supabase Backend** - Serverless functions and real-time capabilities
@@ -91,7 +95,7 @@ An intelligent AI chatbot application that serves as the digital twin of Sibabal
 
 ### AI Digital Twin Architecture
 
-1. **User Input Processing**: Messages are sent to the Supabase Edge Function
+1. **User Input Processing**: Messages are sent to the Supabase Edge Function (except quick actions and queries containing "project", which render visuals instantly)
 2. **Context Building**: The function dynamically fetches repository information from GitHub
 3. **AI Generation**: Cohere AI processes the message with repository context
 4. **Streaming Response**: Real-time streaming of AI responses back to the frontend
@@ -169,10 +173,12 @@ The project uses Supabase for:
 - **Authentication**: User management (if needed)
 - **Database**: Chat history and user data storage
 
-Key configuration in `supabase/config.toml`:
-- Edge Runtime enabled with Deno
-- Real-time capabilities for live chat
-- CORS headers configured for frontend communication
+Key configuration in your Edge Function:
+- Handle CORS preflight (OPTIONS) with 200/204 and include:
+  - `Access-Control-Allow-Origin: http://localhost:5173` (or your deployed origin)
+  - `Access-Control-Allow-Methods: POST, OPTIONS`
+  - `Access-Control-Allow-Headers: authorization, content-type, x-client-info, apikey`
+  - Optionally `Access-Control-Max-Age: 86400`
 
 ### AI Configuration
 
@@ -189,6 +195,9 @@ The chatbot is configured to:
 2. Click **Share** → **Publish**
 3. Your frontend will be deployed instantly
 
+### Live Demo
+- Deployed at [`sibz-chat-twin.vercel.app`](https://sibz-chat-twin.vercel.app/)
+
 ### Backend Deployment (Supabase)
 1. Link your project to Supabase Cloud:
    ```bash
@@ -199,6 +208,8 @@ The chatbot is configured to:
    ```bash
    supabase functions deploy chat
    ```
+
+3. Configure CORS in the function responses (see Configuration above)
 
 3. Set environment variables in Supabase Dashboard:
    - `COHERE_API_KEY`
@@ -233,7 +244,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **IT Support Specialist & AI/ML Enthusiast**
 - 🔧 **Current Focus**: Python, Flask, REST APIs, AI/ML, DevOps
-- 🚀 **Projects**: AI Scrum Bot, AI Chatbots, AI Content Generator
+- 🚀 **Projects**: Sentiment Dashboard, YouTube Comment Analytics Dashboard
 - 💼 **GitHub**: [@Sibz-Design](https://github.com/Sibz-Design)
 - 🔗 **LinkedIn**: [sibabalwe-desemela](https://linkedin.com/in/sibabalwe-desemela-554789253)
 
