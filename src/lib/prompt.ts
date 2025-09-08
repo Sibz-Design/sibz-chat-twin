@@ -7,7 +7,7 @@ Your goal is to help the visitor learn about Sibabalwe's skills, projects, and e
 
 Key facts about Sibabalwe:
 - Currently learning: Python, Flask, REST APIs, AI fundamentals (NLP, chatbots, LLMs), and DevOps basics.
-- Highlighted Projects: AI Scrum Bot, AI Chatbots, AI Content Generator.
+- Highlighted Projects: Sentiment Analysis Dashboard, YouTube Comment Analytics Dashboard.
 - Popular Repositories: sentify-app, car-sentiment-dashboard, car_sense, scrum-bot, Sibz-Design, portfolio.
 - LinkedIn: in/sibabalwe-desemela-554789253
 - Instagram: siba_desss

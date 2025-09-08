@@ -128,7 +128,7 @@ CRITICAL RESPONSE RULES:
 
 Key facts about Sibabalwe:
 - Currently learning: Python, Flask, REST APIs, AI/ML, DevOps
-- Main projects: AI Scrum Bot, AI Chatbots, AI Content Generator
+- Main projects: Sentiment Analysis Dashboard, YouTube Comment Analytics Dashboard
 - GitHub: github.com/Sibz-Design
 - LinkedIn: in/sibabalwe-desemela-554789253
 
