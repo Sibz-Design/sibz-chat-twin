@@ -171,15 +171,39 @@ export function HeroSection() {
               <div id="contact-section" className="mt-16 max-w-2xl mx-auto text-left">
                 <h2 className="text-2xl font-semibold mb-4">Contact Me</h2>
                 <p className="text-sm text-muted-foreground mb-6">Send me a message or connect on LinkedIn.</p>
-                <form action="" method="post" onSubmit={(e) => {
-                  // fallback: open mailto with form contents
+                <form action="" method="post" onSubmit={async (e) => {
                   e.preventDefault();
                   const form = e.currentTarget as HTMLFormElement;
                   const formData = new FormData(form);
-                  const name = encodeURIComponent(String(formData.get('name') || ''));
-                  const email = encodeURIComponent(String(formData.get('email') || ''));
-                  const message = encodeURIComponent(String(formData.get('message') || ''));
-                  window.location.href = `mailto:sibabalwedesemela7@gmail.com?subject=Portfolio%20Contact%20from%20${name}&body=From:%20${name}%20(%20${email}%20)%0D%0A%0D%0A${message}`;
+                  const name = String(formData.get('name') || '').trim();
+                  const email = String(formData.get('email') || '').trim();
+                  const message = String(formData.get('message') || '').trim();
+
+                  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                  if (!supabaseUrl || !supabaseAnonKey) {
+                    alert('Supabase is not configured.');
+                    return;
+                  }
+
+                  try {
+                    (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = true;
+                    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+                      body: JSON.stringify({ name, email, message })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      throw new Error(data?.error || 'Failed to send');
+                    }
+                    alert('Message sent successfully!');
+                    form.reset();
+                  } catch (err:any) {
+                    alert(`Failed to send message: ${err.message || err}`);
+                  } finally {
+                    (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = false;
+                  }
                 }} className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Input name="name" placeholder="Your name" required className="bg-card/50" />
