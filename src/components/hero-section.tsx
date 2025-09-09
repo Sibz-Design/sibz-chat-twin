@@ -180,17 +180,16 @@ export function HeroSection() {
                   const message = String(formData.get('message') || '').trim();
 
                   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-                  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-                  if (!supabaseUrl || !supabaseAnonKey) {
+                  if (!supabaseUrl) {
                     alert('Supabase is not configured.');
                     return;
                   }
 
                   try {
-                    (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = true;
+                    (form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = true;
                     const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseAnonKey}` },
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ name, email, message })
                     });
                     const data = await res.json();
@@ -202,7 +201,7 @@ export function HeroSection() {
                   } catch (err:any) {
                     alert(`Failed to send message: ${err.message || err}`);
                   } finally {
-                    (e.currentTarget.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = false;
+                    (form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = false;
                   }
                 }} className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
