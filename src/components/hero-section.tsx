@@ -187,7 +187,7 @@ export function HeroSection() {
 
                   try {
                     (form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = true;
-                    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                    const res = await fetch(`${supabaseUrl}/functions/v1/send-email-function`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ name, email, message })
