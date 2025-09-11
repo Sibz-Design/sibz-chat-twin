@@ -2,7 +2,7 @@
 
 Live demo: [`sibz-chat-twin.vercel.app`](https://sibz-chat-twin.vercel.app/)
 
-An intelligent AI chatbot application that serves as the digital twin of Sibabalwe Desemela. Built with React, TypeScript, and powered by Supabase Edge Functions and Cohere AI, this chatbot provides contextual responses about Sibabalwe's work, projects, and expertise by dynamically fetching information from his GitHub repositories.
+An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe Desemela. Built with React, TypeScript, and powered by Supabase Edge Functions and Cohere AI, this chatbot provides contextual responses about Sibabalwe's work, projects, and expertise by dynamically fetching information from his GitHub repositories.
 
 ## ✨ Features
 
