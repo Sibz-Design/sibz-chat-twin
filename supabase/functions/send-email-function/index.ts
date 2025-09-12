@@ -23,6 +23,20 @@ interface ContactPayload {
   message: string;
 }
 
+function sanitizeEmailAddress(value: string | null | undefined): string {
+  if (!value) return "";
+  return String(value)
+    .trim()
+    // strip common accidental wrappers and spaces
+    .replace(/^\s*["'<]+\s*/g, "")
+    .replace(/\s*["'>]+\s*$/g, "");
+}
+
+function isLikelyEmail(value: string): boolean {
+  // Simple validation sufficient for config sanity checks
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 function buildPlainTextBody(payload: ContactPayload, fromDisplay: string): string {
   const { name, email, message } = payload;
   return [
@@ -67,11 +81,21 @@ serve(async (req: Request) => {
 
     // Environment
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const toEmail = Deno.env.get("CONTACT_TO_EMAIL");
-    const fromEmail = Deno.env.get("CONTACT_FROM_EMAIL");
+    const toEmailRaw = Deno.env.get("CONTACT_TO_EMAIL");
+    const fromEmailRaw = Deno.env.get("CONTACT_FROM_EMAIL");
+    const toEmail = sanitizeEmailAddress(toEmailRaw);
+    const fromEmail = sanitizeEmailAddress(fromEmailRaw);
 
     if (!resendApiKey || !toEmail || !fromEmail) {
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
+        status: 500,
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!isLikelyEmail(toEmail) || !isLikelyEmail(fromEmail)) {
+      console.error("Invalid email config", { toEmailRaw, fromEmailRaw, toEmail, fromEmail });
+      return new Response(JSON.stringify({ error: "Server email configuration invalid. Please fix CONTACT_* secrets." }), {
         status: 500,
         headers: { ...headers, "Content-Type": "application/json" },
       });
@@ -83,16 +107,27 @@ serve(async (req: Request) => {
 
     const subject = `Portfolio Contact from ${name}`;
     // Send the email. From must be a verified domain with Resend.
-    const sendResult = await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      reply_to: email,
-      subject,
-      text: textBody,
-    } as any);
+    try {
+      const sendResult = await resend.emails.send({
+        from: fromEmail,
+        to: toEmail,
+        reply_to: email,
+        subject,
+        text: textBody,
+      } as any);
 
-    if ((sendResult as any).error) {
-      return new Response(JSON.stringify({ error: (sendResult as any).error?.message || "Failed to send" }), {
+      if ((sendResult as any)?.error) {
+        const errMsg = (sendResult as any).error?.message || "Failed to send";
+        console.error("Resend send error:", errMsg, sendResult);
+        return new Response(JSON.stringify({ error: errMsg }), {
+          status: 502,
+          headers: { ...headers, "Content-Type": "application/json" },
+        });
+      }
+    } catch (err) {
+      const errMsg = (err as Error)?.message || "Email send failed";
+      console.error("Resend threw:", err);
+      return new Response(JSON.stringify({ error: errMsg }), {
         status: 502,
         headers: { ...headers, "Content-Type": "application/json" },
       });

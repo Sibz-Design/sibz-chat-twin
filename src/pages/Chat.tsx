@@ -7,18 +7,21 @@ import { Bot, User, Send, Home, Loader2, Copy, Check } from "lucide-react";
 import SharedImage from "@/assets/shared _image.jpg";
 import { Projects } from "@/components/Projects";
 import { Certificates } from "@/components/Certificates";
+import { Badges } from "@/components/Badges";
+import { Resume } from "@/components/Resume";
+import resumeText from "@/components/Resume.tsx?raw";
 
 interface Message {
   id: string;
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
-  type?: 'text' | 'projects' | 'certificates';
+  type?: 'text' | 'projects' | 'certificates' | 'badges' | 'resume';
   data?: any;
 }
 
 export default function Chat() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +100,7 @@ export default function Chat() {
         content: [
           'Siba (Sibabalwe Desemela) — IT Support Specialist & AI/ML Enthusiast',
           '',
-          '- Strengths: Troubleshooting, automation, Python, data analysis, AI agents.',
+          '- Strengths: Troubleshooting, Automation, Python, data analysis, AI agents.',
           '- Projects: Sentiment Dashboard, YouTube Comment Analytics Dashboard.',
           '- Learning: Python, Flask, REST APIs, DevOps, MLOps.',
           '',
@@ -123,6 +126,40 @@ export default function Chat() {
         type: 'projects',
       };
       setMessages(prev => [...prev, userMessage, projectsVisual]);
+      setInput("");
+      return;
+    }
+
+    // Special-case: any query containing the keyword "badges" should render badges immediately
+    if (normalized.includes('badge') && isMounted.current) {
+      const badgesVisual: Message = {
+        id: (Date.now() + 1).toString(),
+        content: '',
+        role: 'assistant',
+        timestamp: new Date(),
+        type: 'badges',
+      };
+      setMessages(prev => [...prev, userMessage, badgesVisual]);
+      setInput("");
+      return;
+    }
+
+    // Special-case: any query containing the keyword "experience" should show work experience
+    if (normalized.includes('experience') && isMounted.current) {
+      const experienceSummary: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Currently, I am a Technical Support Associate at Capaciti. Here is a summary of my work experience. For more details, please have a look at my resume.",
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+      const experienceMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        content: "",
+        role: 'assistant',
+        timestamp: new Date(),
+        type: 'resume',
+      };
+      setMessages(prev => [...prev, userMessage, experienceSummary, experienceMessage]);
       setInput("");
       return;
     }
@@ -319,7 +356,22 @@ export default function Chat() {
       handleSendMessage(initialQuery);
       setHasInitialQueryBeenHandled(true);
     }
-  }, [searchParams, handleSendMessage, hasInitialQueryBeenHandled]);
+    const showBadges = searchParams.get("show_badges");
+    if (showBadges === "true" && !hasInitialQueryBeenHandled) {
+      const badgeMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        content: '',
+        role: 'assistant',
+        timestamp: new Date(),
+        type: 'badges'
+      };
+      setMessages(prev => [...prev, badgeMsg]);
+      setHasInitialQueryBeenHandled(true);
+      // Clean up the URL
+      searchParams.delete('show_badges');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, handleSendMessage, hasInitialQueryBeenHandled, setSearchParams]);
 
   // Prevent default form submission that might cause navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -334,7 +386,7 @@ export default function Chat() {
     handleSendMessage();
   };
   
-  const hasVisualSection = messages.some(m => m.type === 'projects' || m.type === 'certificates');
+  const hasVisualSection = messages.some(m => m.type === 'projects' || m.type === 'certificates' || m.type === 'badges');
 
   // Formatting helpers for assistant messages
   const escapeHtml = (unsafe: string) =>
@@ -342,7 +394,7 @@ export default function Chat() {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 
   const renderTextWithLinks = (text: string) => {
@@ -375,7 +427,7 @@ export default function Chat() {
         before.split("\n").forEach((line, i, arr) => {
           const noHeadings = line.replace(/^#{1,6}\s*/, "");
           nodes.push(<span key={`t-${lastIndex}-${i}`}>{renderTextWithLinks(noHeadings)}</span>);
-          if (i < arr.length - 1) nodes.push(<br key={`br-${lastIndex}-${i}`} />);
+          if (i < arr.length - 1) nodes.push(<br key={`br-${lastIndex}-${i}`} />)
         });
       }
       nodes.push(
@@ -390,7 +442,7 @@ export default function Chat() {
       after.split("\n").forEach((line, i, arr) => {
         const noHeadings = line.replace(/^#{1,6}\s*/, "");
         nodes.push(<span key={`t-end-${lastIndex}-${i}`}>{renderTextWithLinks(noHeadings)}</span>);
-        if (i < arr.length - 1) nodes.push(<br key={`br-end-${lastIndex}-${i}`} />);
+        if (i < arr.length - 1) nodes.push(<br key={`br-end-${lastIndex}-${i}`} />)
       });
     }
     return nodes;
@@ -436,24 +488,8 @@ export default function Chat() {
       {/* Messages */}
       <div className="flex-1 overflow-auto p-6">
         <div className="container mx-auto max-w-4xl space-y-6">
-          {hasVisualSection && (
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b pb-3 -mt-2">
-              <Button variant="outline" asChild>
-                <Link to="/">
-                  <Home className="w-4 h-4" />
-                  Home
-                </Link>
-              </Button>
-            </div>
-          )}
           {/* Quick actions */}
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" asChild>
-              <Link to="/">
-                <Home className="w-4 h-4" />
-                Home
-              </Link>
-            </Button>
             <Button
               variant="outline"
               onClick={() => {
@@ -484,10 +520,25 @@ export default function Chat() {
             >
               Certificates
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const badgeMsg: Message = {
+                  id: (Date.now() + 1).toString(),
+                  content: '',
+                  role: 'assistant',
+                  timestamp: new Date(),
+                  type: 'badges'
+                };
+                setMessages(prev => [...prev, badgeMsg]);
+              }}
+            >
+              Badges
+            </Button>
             <Button variant="outline" onClick={() => handleSendMessage('What are your key skills?')}>
               Skills
             </Button>
-            <Button variant="outline" onClick={() => handleSendMessage('Summarize your experience')}>
+            <Button variant="outline" onClick={() => handleSendMessage('Summarize your experience')}> 
               Experience
             </Button>
           </div>
@@ -516,12 +567,16 @@ export default function Chat() {
                   <Projects />
                 ) : message.type === 'certificates' ? (
                   <Certificates />
+                ) : message.type === 'badges' ? (
+                  <Badges />
+                ) : message.type === 'resume' ? (
+                  <Resume />
                 ) : (
                   <div className="text-sm leading-relaxed whitespace-pre-wrap break-words pr-12">
                     {renderFormattedMessage(message.content)}
                   </div>
                 )}
-                {message.role === 'assistant' && message.type !== 'projects' && message.type !== 'certificates' && (
+                {message.role === 'assistant' && message.type !== 'projects' && message.type !== 'certificates' && message.type !== 'badges' && (
                   <div className="absolute top-2 right-2">
                     <Button variant="ghost" onClick={() => handleCopy(message.id, message.content)}>
                       {copiedMessageId === message.id ? (

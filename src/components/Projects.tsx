@@ -24,14 +24,7 @@ const projects = [
 export function Projects() {
   return (
     <div className="mt-4 grid md:grid-cols-3 gap-4 text-left max-w-4xl mx-auto">
-      <div className="md:col-span-3 mb-2 flex justify-start">
-        <Button variant="outline" asChild>
-          <Link to="/">
-            <Home className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </Button>
-      </div>
+      
       {projects.map((project, index) => (
         <Card key={index}>
           <CardHeader>

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/enhanced-button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Bot, Send, Sparkles, ExternalLink, Mail } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
@@ -88,10 +88,18 @@ export function HeroSection() {
             Ask me anything about my skills, projects, and experience. 
             I'll respond just like the real Siba would.
           </p>
-
-          {showProjects ? (
-            <Projects />
-          ) : (
+{showProjects ? (
+  <>
+    <Button 
+      onClick={() => setShowProjects(false)}
+      variant="outline"
+      className="mb-4"
+    >
+      Back to Home
+    </Button>
+    <Projects />
+  </>
+) : (
             <>
               {/* Chat Input */}
               <div className="mb-8 max-w-2xl mx-auto">
@@ -141,6 +149,12 @@ export function HeroSection() {
                 <Button variant="hero" onClick={scrollToContact}>
                   <Mail className="w-4 h-4" />
                   Contact Me
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/chat?show_badges=true">
+                    <ExternalLink className="w-4 h-4" />
+                    Badges
+                  </Link>
                 </Button>
               </div>
 
