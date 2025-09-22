@@ -199,11 +199,9 @@ export default function Chat() {
         const json = await response.json();
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: '',
+          content: json.message.content[0].text, // <--- Changed this line
           role: 'assistant',
           timestamp: new Date(),
-          type: json.type,
-          data: json.data,
         };
         if (isMounted.current) {
           setMessages(prev => [...prev, assistantMessage]);
@@ -289,7 +287,14 @@ export default function Chat() {
                   console.log('Parsed data:', parsed);
                   
                   if (parsed.content) {
-                    assistantMessage += parsed.content;
+                    let content = parsed.content;
+                    try {
+                      // Try to parse the content as JSON
+                      content = JSON.parse(content).content;
+                    } catch (e) {
+                      // If it's not a JSON string, use it as is
+                    }
+                    assistantMessage += content;
                     if (isMounted.current) {
                       setMessages(prev => prev.map(msg => 
                         msg.id === assistantMessageId 
