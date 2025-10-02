@@ -19,6 +19,11 @@ const projects = [
     image: sentifyImage,
     link: "https://sentiment-dashboard-evzvmpqgutwht5bubgbh4u.streamlit.app/",
   },
+  { title: "Resume-AI-Craft",
+    description: "Resume AI Craft is a powerful, open-source resume builder that helps you create professional, ATS-friendly resumes with the power of AI.",
+    image: placeholder.svg,
+    link: "#",
+  }, 
 ];
 
 export function Projects() {
