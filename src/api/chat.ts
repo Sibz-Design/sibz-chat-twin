@@ -17,8 +17,8 @@ const projects = [
     link: "https://sentiment-dashboard-evzvmpqgutwht5bubgbh4u.streamlit.app/",
   },
   {
-    title: "Project 3",
-    description: "This is a description of project 3.",
+    title: "Resume AI Craft",
+    description: "An AI-powered resume crafting tool that generates tailored, ATS-friendly resumes.",
     image: "/placeholder.svg",
     link: "#",
   },

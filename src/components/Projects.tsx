@@ -19,6 +19,12 @@ const projects = [
     image: sentifyImage,
     link: "https://sentiment-dashboard-evzvmpqgutwht5bubgbh4u.streamlit.app/",
   },
+  {
+    title: "Resume AI Craft",
+    description: "An AI-powered resume crafting tool that generates tailored, ATS-friendly resumes.",
+    image: "/placeholder.svg",
+    link: "#",
+  },
 ];
 
 export function Projects() {
