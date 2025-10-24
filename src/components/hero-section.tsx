@@ -84,7 +84,7 @@ export function HeroSection() {
           {/* Description */}
           <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed">
 
-            Meet Sibabalwe Desemela - IT Support & AI/ML Enthusaist.  
+            Meet Sibabalwe Desemela - IT Support & AI/ML Enthusiast.  
             Ask me anything about my skills, projects, and experience. 
             I'll respond just like the real Siba would.
           </p>
