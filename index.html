@@ -8,6 +8,12 @@
     <meta name="author" content="Sibabalwe Desemela" />
     <meta name="keywords" content="AI Portfolio, IT Support, Python, Flask, AI/ML, Digital Twin" />
 
+    <script>
+  const theme = localStorage.getItem('theme') || 
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.classList.add(theme);
+</script>
+    
     <meta property="og:title" content="Sibz AI Portfolio - Chat with Siba's Digital Twin" />
     <meta property="og:description" content="Interactive AI portfolio. Ask me anything about my skills, projects, and experience!" />
     <meta property="og:type" content="https://sibz-chat-twin.vercel.app/" />
