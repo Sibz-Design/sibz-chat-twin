@@ -9,7 +9,7 @@ import yt_dashboardImage from "@/assets/yt_dashboard.png";
 const projects = [
   {
     title: "YouTube Comment Analytics Dashboard",
-    description: "A python-based web application for analyzing YouTube commwnts with interactive charts, sentiment analysis, and video data visualization.",
+    description: "A python-based web application for analyzing YouTube comments with interactive charts, sentiment analysis, and video data visualization.",
     image: yt_dashboardImage,
     link: "https://car-sense-t14j.onrender.com/",
   },
@@ -21,7 +21,7 @@ const projects = [
   },
   { title: "Resume-AI-Craft",
     description: "Resume AI Craft is a powerful, open-source resume builder that helps you create professional, ATS-friendly resumes with the power of AI.",
-    image: placeholder.svg,
+    image: "/placeholder.svg",
     link: "#",
   }, 
 ];
