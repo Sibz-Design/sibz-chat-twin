@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bot, Send, Sparkles, ExternalLink, Mail } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
 import { Projects } from "./Projects";
@@ -238,6 +239,13 @@ export function HeroSection() {
                 </form>
               </div>
             </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+          </>
           )}
         </div>
       </div>

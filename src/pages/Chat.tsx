@@ -481,12 +481,15 @@ export default function Chat() {
               <p className="text-sm text-muted-foreground">AI Portfolio Assistant</p>
             </div>
           </div>
-          <Button variant="ghost" asChild>
-            <Link to="/">
-              <Home className="w-4 h-4" />
-              Home
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" asChild>
+              <Link to="/">
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
