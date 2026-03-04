@@ -11,7 +11,7 @@ import { Projects } from "./Projects";
 const suggestedQuestions = [
   "Who is Siba?",
   "Show me Siba's projects",
-  "What tech stack do Siba use?",
+  "What tech stack does Siba use?",
   "Tell me about Siba's experience",
 ];
 
@@ -84,9 +84,8 @@ export function HeroSection() {
           {/* Description */}
           <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed">
 
-            Meet Sibabalwe Desemela - IT Support & AI/ML Enthusiast.  
-            Ask me anything about my skills, projects, and experience. 
-            I'll respond just like the real Siba would.
+            Hi, I'm SibzAI — an AI-powered portfolio for Sibabalwe Desemela. 
+            Ask me anything about his skills, projects, and experience.
           </p>
 {showProjects ? (
   <>
