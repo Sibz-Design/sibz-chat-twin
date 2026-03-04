@@ -84,7 +84,8 @@ export function HeroSection() {
           {/* Description */}
           <p className="text-lg md:text-xl text-foreground/80 mb-12 max-w-2xl mx-auto leading-relaxed">
 
-            Welcome! I'm SibzAI - an AI-powered portfolio for Sibabalwe Desemela, IT Support Specialist & AI/ML Enthusiast. 
+            Welcome! I'm SibzAI - an AI-powered portfolio for Sibabalwe Desemela, IT Support Specialist & AI/ML Enthusiast.
+           
             Ask me anything about his skills, projects, and experience.
           </p>
 {showProjects ? (
