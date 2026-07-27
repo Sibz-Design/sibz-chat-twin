@@ -639,15 +639,16 @@ export default function Chat() {
                 )}
                 {message.role === 'assistant' && message.type !== 'projects' && message.type !== 'certificates' && message.type !== 'badges' && (
                   <div className="absolute top-2 right-2">
-                    <Button variant="ghost" onClick={() => handleCopy(message.id, message.content)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
+                      onClick={() => handleCopy(message.id, message.content)}
+                    >
                       {copiedMessageId === message.id ? (
-                        <>
-                          <Check className="w-4 h-4 mr-1" /> Copied
-                        </>
+                        <Check className="w-4 h-4" />
                       ) : (
-                        <>
-                          <Copy className="w-4 h-4 mr-1" /> Copy
-                        </>
+                        <Copy className="w-4 h-4" />
                       )}
                     </Button>
                   </div>
