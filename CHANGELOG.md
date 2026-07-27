@@ -306,3 +306,34 @@ Rewrote the résumé content to match the site owner's actual CV document:
 - Kept `github.com/Sibz-Design` (hyphenated) rather than the CV's `github.com/SibzDesign`,
   since the hyphenated form is used consistently everywhere else in this codebase — worth
   the site owner double-checking which is actually correct.
+
+### `src/components/hero-section.tsx` — project suggestion now reaches the actual chat environment
+The site owner noticed that clicking "Show me Siba's projects" on the homepage only
+displayed the Projects grid inline inside the hero's scroll card, never actually entering
+the chat environment — inconsistent with every other suggested question ("Who is Siba?",
+"What tech stack...", "Tell me about experience"), which all correctly navigate to `/chat`.
+
+Root cause: `handleStartChat` special-cased any query containing "project" to set a local
+`showProjects` flag and return early, instead of navigating like everything else. Removed
+that special-case; project queries now navigate to `/chat?query=...` uniformly, where
+`Chat.tsx`'s own project-shortcut renders the same grid correctly inside the real chat UI.
+Also removed the now-dead `showProjects` state, its "Back to Home" button, and the
+now-unused `Projects` import.
+**Verified live** in a running dev server: clicking the suggestion now shows the proper
+chat header and quick-action buttons, with the Projects grid rendered as a chat message.
+
+### `src/pages/Chat.tsx` — fixed the Copy button overlapping response text
+The site owner noticed the Copy button rendering on top of short assistant responses
+(e.g. the refusal message). Root cause: the message text reserved `pr-12` (48px) of right
+padding for the button, but the button itself (icon + "Copy"/"Copied" label + padding) was
+roughly 90-100px wide — nearly double the space actually reserved for it.
+
+Rather than just widening the padding (which would still be fragile if the button's
+content ever changed again), shrunk the button to icon-only (`size="icon"`, a 40px square)
+so it fits cleanly within the existing 48px reserve, and added an `aria-label` reflecting
+the current state ("Copy message" / "Copied") so it stays accessible without the visible
+text label.
+**Verified live**: measured the actual rendered text glyph positions (via a DOM Range,
+not just the containing div's bounding box, which is misleading here since the div is
+full-width regardless of padding) against the button's position — confirmed a clean 16px
+gap with no overlap.
