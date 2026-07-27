@@ -1,12 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
-import PropTypes from "prop-types";
+import { useRef, useState, useEffect, type ReactNode } from "react";
+import { useScroll, useTransform, motion, type MotionValue } from "framer-motion";
 
-/**
- * Header wraps a title and moves it vertically on scroll.
- * @param {{ translate: import("framer-motion").MotionValue<number>, titleComponent: React.ReactNode }} props
- */
-export function Header({ translate, titleComponent }) {
+interface HeaderProps {
+  translate: MotionValue<number>;
+  titleComponent: ReactNode;
+}
+
+/** Header wraps a title and moves it vertically on scroll. */
+export function Header({ translate, titleComponent }: HeaderProps) {
   return (
     <motion.div
       role="banner"
@@ -19,16 +20,14 @@ export function Header({ translate, titleComponent }) {
   );
 }
 
-Header.propTypes = {
-  translate: PropTypes.object.isRequired,
-  titleComponent: PropTypes.node.isRequired,
-};
+interface CardProps {
+  rotateX: MotionValue<number>;
+  scale: MotionValue<number>;
+  children: ReactNode;
+}
 
-/**
- * Card applies 3D rotate and scale transforms to its children on scroll.
- * @param {{ rotateX: import("framer-motion").MotionValue<number>, scale: import("framer-motion").MotionValue<number>, children: React.ReactNode }} props
- */
-export function Card({ rotateX, scale, children }) {
+/** Card applies 3D rotate and scale transforms to its children on scroll. */
+export function Card({ rotateX, scale, children }: CardProps) {
   return (
     <motion.div
       role="region"
@@ -49,18 +48,16 @@ export function Card({ rotateX, scale, children }) {
   );
 }
 
-Card.propTypes = {
-  rotateX: PropTypes.object.isRequired,
-  scale: PropTypes.object.isRequired,
-  children: PropTypes.node.isRequired,
-};
+interface ContainerScrollProps {
+  titleComponent: ReactNode;
+  children: ReactNode;
+}
 
 /**
  * ContainerScroll sets up a scroll container with perspective and provides
  * header and card animations based on scroll progress.
- * @param {{ titleComponent: React.ReactNode, children: React.ReactNode }} props
  */
-export default function ContainerScroll({ titleComponent, children }) {
+export default function ContainerScroll({ titleComponent, children }: ContainerScrollProps) {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef });
   const [isMobile, setIsMobile] = useState(false);
@@ -95,8 +92,3 @@ export default function ContainerScroll({ titleComponent, children }) {
     </div>
   );
 }
-
-ContainerScroll.propTypes = {
-  titleComponent: PropTypes.node.isRequired,
-  children: PropTypes.node.isRequired,
-};
