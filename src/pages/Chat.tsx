@@ -616,10 +616,11 @@ export default function Chat() {
               className="flex-1 bg-background"
               disabled={isLoading}
             />
-            <Button 
+            <Button
               type="submit"
-              variant="hero" 
+              variant="hero"
               disabled={!input.trim() || isLoading}
+              aria-label="Send message"
             >
               <Send className="w-4 h-4" />
             </Button>
