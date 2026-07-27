@@ -213,3 +213,96 @@ site-owner decision (see "Verified but intentionally left unchanged" sections ab
   issues (8 errors, 8 warnings) in files this audit did not touch — confirmed as
   pre-existing and unrelated, not regressions.
 - `npm run build` was re-run after the P3 changes and also succeeds with no errors.
+
+## Site-owner content updates (2026-07-28)
+
+Not part of the audit — these are the site owner's own updates to the chatbot's content
+and behavior, made directly in the working tree. Documented here for the record.
+
+### `src/pages/Chat.tsx` — broader triggers, new contact shortcut, updated bio
+- Broadened the "who is Siba" trigger phrases: added "about me", "tell me about", "what
+  does Siba/Sibabalwe/Sibz/he do", "what is his role", and "who are you".
+- Added a new `isContactQuery` shortcut (regex matching contact/reach/email/linkedin/
+  connect/"get in touch"/etc.) that instantly returns a canned reply with email and
+  LinkedIn, without going through the AI.
+- Rewrote the "who is Siba" bio to reflect a role change: now a Customer Support Agent at
+  Clickatell (previously Technical Support Associate at Capaciti) and a recent CAPACITI
+  graduate. Replaced the old project list (Sentiment Dashboard, YouTube Comment Analytics
+  Dashboard) with a new one (HR CV screening pipeline, booking automation system,
+  sentiment analysis dashboard) and a new tool list (n8n, Make, OpenAI, Hugging Face,
+  Python). Expanded the certificate list to include Google, Cisco, IBM, Microsoft, AWS,
+  Stanford, Duke, and Johns Hopkins.
+- Fixed the LinkedIn URL to include a trailing slash for consistency with the other
+  LinkedIn links already in the file.
+
+### `supabase/functions/chat/index.ts` — expanded system prompt with topic guardrails
+- Added explicit guardrails instructing the AI to only answer questions about Siba, with
+  a fixed polite-refusal line for unrelated topics, and instructions for handling mixed
+  questions (answer only the Siba-related part).
+- Added an instruction not to describe Siba as a frontend/software/DevOps engineer unless
+  the user explicitly asks.
+- Updated the same bio facts as the Chat.tsx change above (Clickatell, CAPACITI, new
+  projects/tools/certs), so the live AI's knowledge stays in sync with the local
+  shortcut content.
+- Added strict contact-info formatting rules: mailto-link format only, no inventing other
+  social platforms or handles, explicitly no Twitter/X mentions.
+- Reformatted the tech stack from a single inline string into a bullet list, and added a
+  new "technical focus" bullet list (IT support/helpdesk, AI workflow automation, SMS/API
+  messaging, Python/AI tooling).
+
+**Status:** both files were modified in the working tree but not yet committed as of this
+entry.
+
+## Client-side topic guardrail, bug fixes, and CV sync (2026-07-28, cont.)
+
+After the above was drafted, live testing surfaced that the AI wasn't actually refusing
+off-topic questions (e.g. "how do I make a cocktail?" got a full generic answer) because
+the guardrails only existed in the *local* `supabase/functions/chat/index.ts`, while the
+frontend calls a separately-deployed function, `ai-chat-function`, whose source isn't in
+this repo. The site owner added a client-side keyword gate in `Chat.tsx` as a deterministic
+first line of defense (refuse anything that doesn't mention Siba by name or match an
+existing shortcut) and pasted the actual live `ai-chat-function` source for comparison.
+
+### `src/pages/Chat.tsx` — fixed a build-breaking bug plus three UX regressions in the new gate
+- **Fixed a syntax error that broke the production build entirely**: `normalized.includes('what is Siba's role')`
+  had an unescaped apostrophe inside a single-quoted string, which is invalid JS/TS and
+  made `npm run build` fail outright. Also removed a dead duplicate line
+  (`normalized.includes('what does Siba do')`) that could never match anything since
+  `normalized` is always lowercased. Replaced both with proper regexes (which don't have
+  this quoting problem) that also add "what does he do" / "what is his role" as valid
+  phrasing.
+- **Fixed the "Skills" (and likely "Experience") quick-action buttons being incorrectly
+  refused**: unlike Projects/Certificates/Badges (which render their cards directly,
+  bypassing this check entirely), the Skills and Experience buttons go through
+  `handleSendMessage`, and neither "What are your key skills?" nor "Summarize your
+  experience" mentions Siba by name — so the new refusal gate was blocking them before
+  they ever reached their intended handling. Added the same whole-word patterns already
+  used by the project/badge/experience shortcuts (plus a new `skills?` pattern) into the
+  gate's on-topic check.
+- **Added a greeting allowlist**: "hi", "hello", "hey", "yo", "sup", "hiya", "howdy", and
+  time-of-day greetings now get a friendly canned welcome instead of being refused or sent
+  to the AI.
+- **Tightened the overly-broad `isWhoIsSiba` triggers**: `includes('tell me about')` and
+  `includes('about me')` were substring matches anywhere in the message, so "tell me about
+  black holes" would trigger the full Siba bio dump instead of being treated as off-topic.
+  Replaced with regexes that require the topic to actually be Siba
+  (`tell me about (siba|sibz|sibabalwe|him|his background|yourself)`).
+
+### `src/components/Resume.tsx` — synced to the real CV
+Rewrote the résumé content to match the site owner's actual CV document:
+- Added the new Customer Support Agent role at Clickatell (April 2026 – Present) and
+  updated the CAPACITI role's end date (April 2025 – March 2026).
+- Expanded the Technical Support Associate bullet points to include the HR AI Agent CV
+  screening pipeline, booking automation system, Sentiment Analysis Dashboard, and YouTube
+  data pipeline (n8n, Make, OpenAI, Cohere, Airtable, Streamlit, Hugging Face, Flask).
+- Added a full Certifications section (IT Support & Networking, AI/ML/Data Science, Cloud
+  & Data, Professional Development) — previously certifications were only mentioned in
+  passing in the Professional Summary.
+- Replaced the old short Technical/Soft Skills lists with the CV's more detailed versions.
+- Removed the old "Hobbies and Interests" section — it wasn't part of the CV.
+- Simplified References to "Available on request." with no names at all, matching the CV
+  exactly (previously named the three references without phone numbers, per the earlier
+  privacy fix — the actual CV goes further and doesn't name them at all).
+- Kept `github.com/Sibz-Design` (hyphenated) rather than the CV's `github.com/SibzDesign`,
+  since the hyphenated form is used consistently everywhere else in this codebase — worth
+  the site owner double-checking which is actually correct.
