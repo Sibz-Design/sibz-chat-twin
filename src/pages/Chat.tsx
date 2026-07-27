@@ -34,11 +34,7 @@ export default function Chat() {
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    console.log('Environment check:');
-    console.log('VITE_SUPABASE_URL:', supabaseUrl || 'MISSING');
-    console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'MISSING');
-    
+
     if (!supabaseUrl || !supabaseKey) {
       console.error('Missing environment variables! Make sure .env file exists with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
     }
@@ -171,8 +167,6 @@ export default function Chat() {
     }
 
     try {
-      console.log('Making request to:', `${supabaseUrl}/functions/v1/ai-chat-function`);
-      
       const response = await fetch(`${supabaseUrl}/functions/v1/ai-chat-function`, {
         method: 'POST',
         headers: {
@@ -182,9 +176,6 @@ export default function Chat() {
         body: JSON.stringify({ message: messageText }),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Response error:', errorText);
@@ -193,7 +184,6 @@ export default function Chat() {
 
       // Check if response is actually streaming
       const contentType = response.headers.get('content-type');
-      console.log('Response content-type:', contentType);
 
       if (contentType && contentType.includes('application/json')) {
         const json = await response.json();
@@ -253,28 +243,22 @@ export default function Chat() {
           const { done, value } = await reader.read();
           
           if (done) {
-            console.log('Stream completed');
             break;
           }
 
           buffer += decoder.decode(value, { stream: true });
-          console.log('Received chunk:', buffer);
-          
+
           const lines = buffer.split('\n');
           buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
           for (const line of lines) {
             const trimmedLine = line.trim();
             if (!trimmedLine) continue;
-            
-            console.log('Processing line:', trimmedLine);
-            
+
             if (trimmedLine.startsWith('data: ')) {
               const data = trimmedLine.slice(6).trim();
-              console.log('Data:', data);
-              
+
               if (data === '[DONE]') {
-                console.log('Stream finished');
                 if (isMounted.current) {
                   setIsLoading(false);
                 }
@@ -284,8 +268,7 @@ export default function Chat() {
               if (data && data !== '') {
                 try {
                   const parsed = JSON.parse(data);
-                  console.log('Parsed data:', parsed);
-                  
+
                   if (parsed.content) {
                     let content = parsed.content;
                     try {
