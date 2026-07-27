@@ -2,12 +2,11 @@
 
 Live demo: [`sibz-chat-twin.vercel.app`](https://sibz-chat-twin.vercel.app/)
 
-An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe Desemela. Built with React, TypeScript, and powered by Supabase Edge Functions and Cohere AI, this chatbot provides contextual responses about Sibabalwe's work, projects, and expertise by dynamically fetching information from his GitHub repositories.
+An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe Desemela. Built with React, TypeScript, and powered by Supabase Edge Functions and Cohere AI, this chatbot provides contextual responses about Sibabalwe's work, projects, and expertise based on a curated system prompt.
 
 ## ✨ Features
 
 - **AI-Powered Conversations** - Intelligent responses powered by Cohere's Command-R-Plus model
-- **GitHub Integration** - Dynamically fetches repository context for accurate project discussions
 - **Real-time Streaming** - Server-sent events for smooth, real-time chat experience
 - **Visual Sections** - Projects and Certificates render as rich cards (no API call needed for quick actions or queries containing "project")
 - **Polished Chat UI** - Linkified text, code blocks, copy-to-clipboard, sticky Home/Back bar
@@ -29,7 +28,6 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
 - **[Supabase](https://supabase.com/)** - Backend-as-a-Service with Edge Functions
 - **[Cohere AI](https://cohere.ai/)** - Large language model for natural conversations
 - **[Deno](https://deno.land/)** - Runtime for Edge Functions
-- **GitHub API** - Dynamic repository content fetching
 
 ## 🚀 Quick Start
 
@@ -38,7 +36,6 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
 - [Node.js](https://nodejs.org/) (v16 or higher)
 - [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)
 - [Cohere API Key](https://dashboard.cohere.ai/)
-- GitHub Token (optional, for higher API rate limits)
 
 ### Installation & Setup
 
@@ -68,10 +65,7 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
    ```env
    # Cohere AI API Key (required)
    COHERE_API_KEY=your_cohere_api_key_here
-   
-   # GitHub Token (optional - for higher rate limits)
-   GITHUB_TOKEN=your_github_token_here
-   
+
    # Supabase Configuration
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -95,15 +89,13 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
 
 ### AI Digital Twin Architecture
 
-1. **User Input Processing**: Messages are sent to the Supabase Edge Function (except quick actions and queries containing "project", which render visuals instantly)
-2. **Context Building**: The function dynamically fetches repository information from GitHub
-3. **AI Generation**: Cohere AI processes the message with repository context
-4. **Streaming Response**: Real-time streaming of AI responses back to the frontend
+1. **User Input Processing**: Messages are sent to the Supabase Edge Function (except quick actions and queries containing "project"/"badge"/"experience", which render visuals instantly)
+2. **AI Generation**: Cohere AI processes the message using a system prompt describing Sibabalwe's skills, projects, and experience
+3. **Streaming Response**: Real-time streaming of AI responses back to the frontend
 
 ### Key Components
 
-- **Edge Function (`/supabase/functions/chat/index.ts`)**: Handles AI processing and GitHub integration
-- **GitHub Integration**: Automatically fetches repository structure, README files, and code samples
+- **Edge Function (`/supabase/functions/chat/index.ts`)**: Handles AI processing via Cohere
 - **Streaming Interface**: Server-sent events for real-time conversation flow
 
 ## 💻 Development
@@ -167,7 +159,7 @@ sibz-chat-twin/
 ### Supabase Configuration
 
 The project uses Supabase for:
-- **Edge Functions**: AI processing and GitHub integration
+- **Edge Functions**: AI processing via Cohere
 - **Real-time**: WebSocket connections for live chat
 - **Authentication**: User management (if needed)
 - **Database**: Chat history and user data storage
@@ -185,7 +177,6 @@ The chatbot is configured to:
 - Use Cohere's Command-R-Plus model
 - Maintain conversation context
 - Provide responses as Sibabalwe's digital twin
-- Include relevant repository information in responses
 
 ## 🚢 Deployment
 
@@ -212,7 +203,6 @@ The chatbot is configured to:
 
 3. Set environment variables in Supabase Dashboard:
    - `COHERE_API_KEY`
-   - `GITHUB_TOKEN` (optional)
 
 ## 🤝 Contributing
 
