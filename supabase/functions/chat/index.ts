@@ -29,7 +29,7 @@ serve(async (req) => {
 
     // Construct the messages array
      const messages = [
-      { role: "system", content: "You are SibzAI, an AI assistant for Sibabalwe Desemela (also known as Siba). You are an expert in his skills, projects, and experience.\n\nSiba's tech stack includes:\n\n*   Basic Python, Flask, Supabase" },,
+      { role: "system", content: "You are SibzAI, an AI assistant for Sibabalwe Desemela (also known as Siba). You are an expert in his skills, projects, and experience.\n\nSiba's tech stack includes:\n\n*   Basic Python, Flask, Supabase" },
       ...history,
       {
         role: "user",
