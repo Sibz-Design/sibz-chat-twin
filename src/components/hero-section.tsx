@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bot, Send, Sparkles, ExternalLink, Mail } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
 import { Projects } from "./Projects";
@@ -200,7 +201,10 @@ export function HeroSection() {
           const email = String(formData.get('email') || '').trim();
           const message = String(formData.get('message') || '').trim();
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          if (!supabaseUrl) { alert('Supabase is not configured.'); return; }
+          if (!supabaseUrl) {
+            toast({ title: 'Configuration error', description: 'Supabase is not configured.', variant: 'destructive' });
+            return;
+          }
           try {
             (form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = true;
             const res = await fetch(`${supabaseUrl}/functions/v1/send-email-function`, {
@@ -210,10 +214,10 @@ export function HeroSection() {
             });
             const data = await res.json();
             if (!res.ok) { throw new Error(data?.error || 'Failed to send'); }
-            alert('Message sent successfully!');
+            toast({ title: 'Message sent', description: "Thanks for reaching out — I'll get back to you soon." });
             form.reset();
           } catch (err: any) {
-            alert(`Failed to send message: ${err.message || err}`);
+            toast({ title: 'Failed to send message', description: err.message || String(err), variant: 'destructive' });
           } finally {
             (form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled = false;
           }
