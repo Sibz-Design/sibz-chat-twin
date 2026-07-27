@@ -165,19 +165,42 @@ No behavioral change — JSX and logic bodies are untouched.
   session (not a reproduced app bug) — worth a quick manual click-through if you want full
   confidence before relying on it.
 
-## Not yet addressed (P3, lower priority)
+## P3 — Lower priority cleanup
 
-- `src/App.css` — leftover Vite template file, never imported, dead code.
-- Server-only packages (`express`, `cors`, `node-fetch`, `@aws-sdk/client-s3`, `@smithy/*`,
-  `cohere-ai`, `concurrently`) sit in `package.json` `dependencies` rather than
-  `devDependencies`. Confirmed none are imported anywhere in `src/`, so there's no bundle
-  impact — this is a housekeeping-only item.
-- README overstates functionality: it describes dynamic GitHub-repo fetching/context
-  building that doesn't exist in the current code. Git history shows this feature existed
-  in an older commit (`bc09e10`) and was stripped out in a later refactor; the README was
-  never updated to match.
-- No sitemap.xml; no per-route `<title>`/meta management (the `/chat` route shows the same
-  browser-tab title and SEO metadata as `/`).
+### `7274b56` — Remove unused `src/App.css`
+Leftover default Vite template file — never imported by `main.tsx` or anywhere else
+(`index.css` is the only stylesheet actually loaded).
+
+### `0736c7d` — Remove README claims about GitHub API integration
+The README described a "GitHub Integration" feature that dynamically fetches repository
+content, structure, and code samples to build chatbot context. This existed in an earlier
+commit (`bc09e10`) but was stripped out in a later refactor — the current chat function
+uses a static, hardcoded system prompt instead. Removed the GitHub-fetching claims from
+the feature list, tech stack, prerequisites, env var setup, and architecture sections.
+Left the "Future Enhancements" section's "Enhanced GitHub repository analysis" line
+untouched since it's honestly framed as future work, not a current-feature claim.
+
+### `27a16ab` — Add sitemap.xml and per-route page titles
+- `public/sitemap.xml` lists the two real routes (`/` and `/chat`); referenced from
+  `robots.txt` via a `Sitemap:` directive.
+- `Index`, `Chat`, and `NotFound` now set `document.title` on mount, so the browser
+  tab/SEO title actually changes per route instead of always showing the homepage title.
+- Drive-by fix: removed an unused `resumeText` import in `Chat.tsx` (imported via `?raw`
+  but never referenced anywhere in the file) — found while editing this file for the
+  title fix.
+
+## Verified but intentionally left unchanged (P3)
+
+- **Server-only packages** (`express`, `cors`, `node-fetch`, `@aws-sdk/client-s3`,
+  `@smithy/*`, `cohere-ai`, `concurrently`) sit in `package.json` `dependencies` rather
+  than `devDependencies`, and none are imported anywhere in `src/` (confirmed via
+  repo-wide grep — no Express server file, no S3 usage, no server entry point at all).
+  Per site-owner decision: left as-is rather than removed or reorganized.
+
+## Not yet addressed
+
+All items from the original audit have been resolved, fixed, or explicitly deferred per
+site-owner decision (see "Verified but intentionally left unchanged" sections above).
 
 ## Process notes
 
@@ -189,3 +212,4 @@ No behavioral change — JSX and logic bodies are untouched.
   changes: the build succeeds with no errors, and lint shows only 16 pre-existing
   issues (8 errors, 8 warnings) in files this audit did not touch — confirmed as
   pre-existing and unrelated, not regressions.
+- `npm run build` was re-run after the P3 changes and also succeeds with no errors.
