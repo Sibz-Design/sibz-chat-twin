@@ -6,7 +6,6 @@ import { Bot, Send, Sparkles, ExternalLink, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
-import { Projects } from "./Projects";
 import ContainerScroll from "@/components/ui/container-scroll";
 
 const suggestedQuestions = [
@@ -18,7 +17,6 @@ const suggestedQuestions = [
 
 export function HeroSection() {
   const [query, setQuery] = useState("");
-  const [showProjects, setShowProjects] = useState(false);
   const navigate = useNavigate();
   const scrollToContact = () => {
     const el = document.getElementById('contact-section');
@@ -28,11 +26,6 @@ export function HeroSection() {
   const handleStartChat = (question?: string) => {
     const chatQuery = question || query;
     if (chatQuery.trim()) {
-      const normalized = chatQuery.toLowerCase();
-      if (normalized.includes('project')) {
-        setShowProjects(true);
-        return;
-      }
       navigate(`/chat?query=${encodeURIComponent(chatQuery)}`);
     }
   };
@@ -91,77 +84,64 @@ export function HeroSection() {
     }
   >
     {/* Card Content */}
-    {showProjects ? (
-      <div className="flex flex-col items-center justify-center h-full gap-4 p-6">
-        <Button
-          onClick={() => setShowProjects(false)}
-          variant="outline"
-          className="mb-4"
-        >
-          Back to Home
+    <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+      {/* Chat Input */}
+      <div className="w-full max-w-2xl">
+        <div className="flex gap-x-4">
+          <Input
+            placeholder="Ask me anything... or choose a suggestion below"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleStartChat()}
+            className="flex-1 h-14 text-lg bg-card/50 backdrop-blur-sm border-border/50 focus:border-primary/50"
+          />
+          <Button
+            variant="hero"
+            size="xl"
+            onClick={() => handleStartChat()}
+            disabled={!query.trim()}
+          >
+            <Send className="w-5 h-5" />
+            Start Chat
+          </Button>
+        </div>
+      </div>
+
+      {/* Suggested Questions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+        {suggestedQuestions.map((question, index) => (
+          <Button
+            key={index}
+            variant="suggestion"
+            onClick={() => handleStartChat(question)}
+            className="h-auto py-4 px-6 text-left justify-start"
+          >
+            <Bot className="w-4 h-4 text-primary shrink-0" />
+            {question}
+          </Button>
+        ))}
+      </div>
+
+      {/* CTAs */}
+      <div className="flex items-center justify-center gap-3">
+        <Button asChild variant="outline">
+          <a href="https://drive.google.com/drive/folders/1ubhYNykU6iMgzSvxeix6WpdfVniZGc5A?usp=sharing" target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-4 h-4" />
+            Certificates
+          </a>
         </Button>
-        <Projects />
+        <Button variant="hero" onClick={scrollToContact}>
+          <Mail className="w-4 h-4" />
+          Contact Me
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/chat?show_badges=true">
+            <ExternalLink className="w-4 h-4" />
+            Badges
+          </Link>
+        </Button>
       </div>
-    ) : (
-      <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
-        {/* Chat Input */}
-        <div className="w-full max-w-2xl">
-          <div className="flex gap-x-4">
-            <Input
-              placeholder="Ask me anything... or choose a suggestion below"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleStartChat()}
-              className="flex-1 h-14 text-lg bg-card/50 backdrop-blur-sm border-border/50 focus:border-primary/50"
-            />
-            <Button
-              variant="hero"
-              size="xl"
-              onClick={() => handleStartChat()}
-              disabled={!query.trim()}
-            >
-              <Send className="w-5 h-5" />
-              Start Chat
-            </Button>
-          </div>
-        </div>
-
-        {/* Suggested Questions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-          {suggestedQuestions.map((question, index) => (
-            <Button
-              key={index}
-              variant="suggestion"
-              onClick={() => handleStartChat(question)}
-              className="h-auto py-4 px-6 text-left justify-start"
-            >
-              <Bot className="w-4 h-4 text-primary shrink-0" />
-              {question}
-            </Button>
-          ))}
-        </div>
-
-        {/* CTAs */}
-        <div className="flex items-center justify-center gap-3">
-          <Button asChild variant="outline">
-            <a href="https://drive.google.com/drive/folders/1ubhYNykU6iMgzSvxeix6WpdfVniZGc5A?usp=sharing" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4" />
-              Certificates
-            </a>
-          </Button>
-          <Button variant="hero" onClick={scrollToContact}>
-            <Mail className="w-4 h-4" />
-            Contact Me
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/chat?show_badges=true">
-              <ExternalLink className="w-4 h-4" />
-              Badges
-            </Link>
-          </Button>
-        </div>
-      </div>
-    )}
+    </div>
   </ContainerScroll>
 
   {/* Features + Contact outside card */}
