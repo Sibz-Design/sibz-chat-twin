@@ -154,11 +154,10 @@ sibz-chat-twin/
 │   └── utils/                # Utility functions
 ├── supabase/                  # Supabase configuration
 │   ├── functions/            
-│   │   └── chat/             # AI chat Edge Function
+│   │   ├── chat/             # AI chat Edge Function
+│   │   └── send-email-function/ # Contact form Edge Function
 │   ├── config.toml           # Supabase configuration
 │   └── seed.sql              # Database seed data
-├── api/                      # API utilities
-│   └── _shared/             # Shared API configurations
 ├── package.json              # Frontend dependencies
 └── README.md                 # This file
 ```
