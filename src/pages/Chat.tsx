@@ -112,8 +112,8 @@ export default function Chat() {
       return;
     }
 
-    // Special-case: any query containing the keyword "project" should render visual projects immediately
-    if (normalized.includes('project') && isMounted.current) {
+    // Special-case: any query containing the whole word "project"/"projects" should render visual projects immediately
+    if (/\bprojects?\b/.test(normalized) && isMounted.current) {
       const projectsVisual: Message = {
         id: (Date.now() + 1).toString(),
         content: '',
@@ -126,8 +126,8 @@ export default function Chat() {
       return;
     }
 
-    // Special-case: any query containing the keyword "badges" should render badges immediately
-    if (normalized.includes('badge') && isMounted.current) {
+    // Special-case: any query containing the whole word "badge"/"badges" should render badges immediately
+    if (/\bbadges?\b/.test(normalized) && isMounted.current) {
       const badgesVisual: Message = {
         id: (Date.now() + 1).toString(),
         content: '',
@@ -140,8 +140,8 @@ export default function Chat() {
       return;
     }
 
-    // Special-case: any query containing the keyword "experience" should show work experience
-    if (normalized.includes('experience') && isMounted.current) {
+    // Special-case: any query containing the whole word "experience" should show work experience
+    if (/\bexperiences?\b/.test(normalized) && isMounted.current) {
       const experienceSummary: Message = {
         id: (Date.now() + 1).toString(),
         content: "Currently, I am a Technical Support Associate at Capaciti. Here is a summary of my work experience. For more details, please have a look at my resume.",
