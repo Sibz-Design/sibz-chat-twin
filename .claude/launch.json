@@ -4,8 +4,8 @@
     {
       "name": "sibz-chat-twin-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 8080
+      "runtimeArgs": ["run", "dev", "--", "--port", "8099", "--strictPort"],
+      "port": 8099
     }
   ]
 }
