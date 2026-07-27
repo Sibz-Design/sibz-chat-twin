@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "sibz-chat-twin-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "8099", "--strictPort"],
+      "runtimeExecutable": "C:\\Users\\sibabalwe.desemela\\sibz-chat-twin\\.claude\\dev-with-node.cmd",
+      "runtimeArgs": [],
       "port": 8099
     }
   ]
