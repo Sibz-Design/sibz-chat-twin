@@ -4,7 +4,7 @@ export function Resume() {
       <header className="text-center mb-6">
         <h1 className="text-4xl font-bold">Sibabalwe Desemela</h1>
         <p className="text-sm text-gray-600">
-          Phone: (+27) 64 832 4672 | (+27) 62 817 8981 | Email:{" "}
+          Email:{" "}
           <a href="mailto:sibabalwedes@gmail.com" className="text-blue-500">
             sibabalwedes@gmail.com
           </a>
@@ -200,15 +200,15 @@ export function Resume() {
         <div className="flex">
           <div className="w-1/3">
             <h3 className="text-lg font-bold">Capaciti</h3>
-            <p>Brittany Saptoe – (+27) 81 559 2481</p>
+            <p>Brittany Saptoe – contact details available on request</p>
           </div>
           <div className="w-1/3">
             <h3 className="text-lg font-bold">Footgear</h3>
-            <p>Bulelani Mahomana – (+27) 69 398 0253</p>
+            <p>Bulelani Mahomana – contact details available on request</p>
           </div>
           <div className="w-1/3">
             <h3 className="text-lg font-bold">Walter Sisulu University</h3>
-            <p>Lusanda Guma – (+27) 83 896 1251</p>
+            <p>Lusanda Guma – contact details available on request</p>
           </div>
         </div>
       </section>
