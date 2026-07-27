@@ -1,20 +1,20 @@
 export function Resume() {
   return (
-    <div className="p-4 bg-white text-gray-800">
+    <div className="p-4 bg-card text-foreground">
       <header className="text-center mb-6">
         <h1 className="text-4xl font-bold">Sibabalwe Desemela</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Email:{" "}
-          <a href="mailto:sibabalwedes@gmail.com" className="text-blue-500">
+          <a href="mailto:sibabalwedes@gmail.com" className="text-primary hover:underline">
             sibabalwedes@gmail.com
           </a>
         </p>
-        <p className="text-sm text-gray-600">
-          <a href="https://www.linkedin.com/in/sibabalwe-desemela-554789253/" className="text-blue-500">
+        <p className="text-sm text-muted-foreground">
+          <a href="https://www.linkedin.com/in/sibabalwe-desemela-554789253/" className="text-primary hover:underline">
             LinkedIn
           </a>{" "}
           |{" "}
-          <a href="https://github.com/Sibz-Design" className="text-blue-500">
+          <a href="https://github.com/Sibz-Design" className="text-primary hover:underline">
             GitHub
           </a>{" "}
           | Cape Town, Western Cape, 7100
@@ -22,7 +22,7 @@ export function Resume() {
       </header>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Professional Summary
         </h2>
         <p>
@@ -41,12 +41,12 @@ export function Resume() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Professional Experience
         </h2>
         <div className="mb-4">
           <h3 className="text-xl font-bold">Technical Support Associate</h3>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Capaciti, Cape Town, South Africa | April 2025 – Present
           </p>
           <ul className="list-disc list-inside ml-4 mt-2">
@@ -74,7 +74,7 @@ export function Resume() {
         </div>
         <div className="mb-4">
           <h3 className="text-xl font-bold">Sales Generator</h3>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Footgear PTY LTD, Port Elizabeth CBD, South Africa | November 2024 -
             December 2024
           </p>
@@ -103,7 +103,7 @@ export function Resume() {
         </div>
         <div>
           <h3 className="text-xl font-bold">Computer Lab Assistant</h3>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Walter Sisulu University, East London, South Africa | February 2023 -
             December 2023
           </p>
@@ -123,14 +123,14 @@ export function Resume() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Education
         </h2>
         <div>
           <h3 className="text-xl font-bold">
             Diploma In ICT in Support Services
           </h3>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Walter Sisulu University, East London, South Africa | March 2021 –
             May 2025
           </p>
@@ -138,14 +138,14 @@ export function Resume() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Languages
         </h2>
         <p>English (C2), IsiXhosa (Native)</p>
       </section>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Skills
         </h2>
         <div className="flex">
@@ -181,7 +181,7 @@ export function Resume() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           Hobbies and Interests
         </h2>
         <p>
@@ -194,7 +194,7 @@ export function Resume() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-bold border-b-2 border-gray-300 pb-2 mb-4">
+        <h2 className="text-2xl font-bold border-b-2 border-border pb-2 mb-4">
           References
         </h2>
         <div className="flex">
