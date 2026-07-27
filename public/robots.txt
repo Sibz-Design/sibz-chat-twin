@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://sibz-chat-twin.vercel.app/sitemap.xml

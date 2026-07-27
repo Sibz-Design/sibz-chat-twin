@@ -9,7 +9,6 @@ import { Projects } from "@/components/Projects";
 import { Certificates } from "@/components/Certificates";
 import { Badges } from "@/components/Badges";
 import { Resume } from "@/components/Resume";
-import resumeText from "@/components/Resume.tsx?raw";
 
 interface Message {
   id: string;
@@ -29,6 +28,10 @@ export default function Chat() {
   const isMounted = useRef(true);
   const [hasInitialQueryBeenHandled, setHasInitialQueryBeenHandled] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = "Chat with SibzAI | Sibz AI Portfolio";
+  }, []);
 
   // Check environment variables on component mount
   useEffect(() => {
