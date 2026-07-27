@@ -87,25 +87,95 @@ export default function Chat() {
 
     // Special-case: handle "Who is Siba" (and variants) locally with a polished bio response
     const normalized = messageText.trim().toLowerCase();
+
+    // Friendly greetings shouldn't be refused or sent to the AI - handle them locally
+    const isGreeting = /^(hi|hello|hey|yo|sup|hiya|howdy|good morning|good afternoon|good evening)[\s!.,]*$/.test(normalized);
+    if (isGreeting && isMounted.current) {
+      const greetingMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Hey there! I'm SibzAI, Siba's digital twin. Ask me about his skills, projects, experience, or how to get in touch.",
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage, greetingMsg]);
+      setInput("");
+      return;
+    }
+
     const isWhoIsSiba =
       /^who\s+is\s+(siba|sibz|sibabalwe)\??$/.test(normalized) ||
       /^who['’]s\s+(siba|sibz)\??$/.test(normalized) ||
       normalized.startsWith('who is siba') ||
       normalized.startsWith('who is sibabalwe') ||
-      normalized.startsWith('who is sibz');
+      normalized.startsWith('who is sibz') ||
+      /\btell me about (siba|sibz|sibabalwe|him|his background|yourself)\b/.test(normalized) ||
+      /\bwhat does (siba|sibz|sibabalwe|he) do\b/.test(normalized) ||
+      /\bwhat is (his|siba's) role\b/.test(normalized) ||
+      /who are you/.test(normalized);
+
+    const isContactQuery = /\b(contact|reach|email|linkedin|connect|get in touch|how can i contact|how to contact|contact information|contact info|reach out)\b/.test(normalized);
+    const isSibaMentioned = /\b(siba|sibz|sibabalwe|sibzai)\b/.test(normalized);
+
+    // Include the same whole-word patterns used by the project/badge/experience/skills
+    // shortcuts below, so those quick-action buttons don't get refused before reaching
+    // their own dedicated handling further down.
+    const isSibaRelated =
+      isWhoIsSiba ||
+      isContactQuery ||
+      isSibaMentioned ||
+      /\bprojects?\b/.test(normalized) ||
+      /\bbadges?\b/.test(normalized) ||
+      /\bexperiences?\b/.test(normalized) ||
+      /\bskills?\b/.test(normalized);
+
+    if (!isSibaRelated && isMounted.current) {
+      const assistantRefusalMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I can only answer questions about Siba Desemela.",
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage, assistantRefusalMsg]);
+      setInput("");
+      return;
+    }
+    if (isContactQuery && isMounted.current) {
+      const assistantContactMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        content: [
+          "Siba's contact details:",
+          "- Email: mailto:sibabalwedes@gmail.com",
+          "- LinkedIn: https://www.linkedin.com/in/sibabalwe-desemela-554789253/",
+        ].join('\n'),
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage, assistantContactMsg]);
+      setInput("");
+      return;
+    }
+
     if (isWhoIsSiba && isMounted.current) {
       const assistantWhoMsg: Message = {
         id: (Date.now() + 1).toString(),
         content: [
           'Siba (Sibabalwe Desemela) — IT Support Specialist & AI/ML Enthusiast',
           '',
-          '- Strengths: Troubleshooting, Automation, Python, data analysis, AI agents.',
-          '- Projects: Sentiment Dashboard, YouTube Comment Analytics Dashboard.',
-          '- Learning: Python, Flask, REST APIs, DevOps, MLOps.',
+          'Siba is a Cape Town-based IT Support and AI Automation professional with hands-on experience in technical customer support, helpdesk operations, and building AI-powered automation workflows.',
+          '',
+          'He recently graduated from the CAPACITI programme and currently works as a Customer Support Agent at Clickatell, supporting enterprise and developer customers with SMS and API messaging services in a fast-paced, SLA-driven environment.',
+          '',
+          'Outside of his day job, he builds AI and automation projects, including an HR CV screening pipeline, a booking automation system, and a sentiment analysis dashboard using tools like n8n, Make, OpenAI, Hugging Face, and Python.',
+          '',
+          'He holds a Diploma in ICT Support Services and has completed a wide range of certificates and learning programmes from institutions and platforms including Google, Cisco, IBM, Microsoft, AWS, Stanford, Duke, and Johns Hopkins, covering IT support, networking, cloud platforms, AI, machine learning, and data science.',
+          '',
+          'He is building a career at the intersection of technical support, automation, and AI, with a strong interest in environments where curiosity, ownership, and continuous learning are genuinely valued.',
+          '',
+          'Curiosity drives him. Solving problems sharpens his skills. Building solutions keeps him busy. Always learning, always experimenting.',
           '',
           'Links:',
           '- GitHub: https://github.com/Sibz-Design',
-          '- LinkedIn: https://www.linkedin.com/in/sibabalwe-desemela-554789253',
+          '- LinkedIn: https://www.linkedin.com/in/sibabalwe-desemela-554789253/',
         ].join('\n'),
         role: 'assistant',
         timestamp: new Date(),
