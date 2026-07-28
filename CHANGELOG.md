@@ -365,3 +365,26 @@ now-unused `useTheme()` call in `App.tsx`, and deleted `src/hooks/use-theme.tsx`
 other importers).
 **Verified live**: confirmed no class is added to `<html>` anymore and `--background`
 resolves to the chosen palette's value unconditionally, in every browser.
+
+### `src/components/ui/container-scroll.tsx` — fixed the hero card animation being stuck in Chrome
+The site owner reported the hero card's 3D scroll animation (tilt + scale as you scroll)
+never playing in Chrome desktop, Chrome incognito, and mobile - visible as the card staying
+frozen in its initial washed-out/tilted state - while working correctly in Edge. No
+extensions were involved (reproduced in incognito) and no console errors appeared, which
+pointed at Framer Motion's `useScroll` hook's internal scroll-tracking mechanism itself
+(possibly its native CSS scroll-timeline auto-detection behaving differently across
+Chromium builds) rather than application logic.
+
+Replaced `useScroll`/`useTransform` with a plain `window` scroll listener +
+`getBoundingClientRect()` math, replicating the same 0-to-1 progress range Framer Motion's
+default offset produced. Same visual behavior, driven by standard DOM APIs with no
+library-internal uncertainty. This also removed Framer Motion from the bundle entirely, as
+it wasn't used anywhere else in the app - shrunk the JS bundle from ~482KB to ~354KB.
+**Verified live**: confirmed progress interpolates smoothly and correctly at multiple
+scroll positions (e.g. `rotateX(11.67deg) scale(1.029)` at 100px of a 240px scroll range,
+matching the expected math exactly).
+
+**Note:** `framer-motion` is now an unused dependency in `package.json` as a direct result
+of this fix (it has no other usages in `src/`). Not removed yet - the site owner may want
+to weigh in on whether to drop it, similar to the earlier decision to leave other unused
+dependencies alone.
