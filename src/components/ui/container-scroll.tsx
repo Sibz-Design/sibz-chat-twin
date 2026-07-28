@@ -1,41 +1,39 @@
 import { useRef, useState, useEffect, type ReactNode } from "react";
-import { useScroll, useTransform, motion, type MotionValue } from "framer-motion";
 
 interface HeaderProps {
-  translate: MotionValue<number>;
+  translateY: number;
   titleComponent: ReactNode;
 }
 
 /** Header wraps a title and moves it vertically on scroll. */
-export function Header({ translate, titleComponent }: HeaderProps) {
+export function Header({ translateY, titleComponent }: HeaderProps) {
   return (
-    <motion.div
+    <div
       role="banner"
       aria-live="polite"
-      style={{ translateY: translate }}
+      style={{ transform: `translateY(${translateY}px)` }}
       className="max-w-5xl mx-auto text-center"
     >
       {titleComponent}
-    </motion.div>
+    </div>
   );
 }
 
 interface CardProps {
-  rotateX: MotionValue<number>;
-  scale: MotionValue<number>;
+  rotateX: number;
+  scale: number;
   children: ReactNode;
 }
 
 /** Card applies 3D rotate and scale transforms to its children on scroll. */
 export function Card({ rotateX, scale, children }: CardProps) {
   return (
-    <motion.div
+    <div
       role="region"
       aria-label="Scroll-animated content card"
       tabIndex={0}
       style={{
-        rotateX,
-        scale,
+        transform: `rotateX(${rotateX}deg) scale(${scale})`,
         boxShadow:
           "0 9px 20px rgba(0,0,0,0.29), 0 37px 37px rgba(0,0,0,0.26), 0 84px 50px rgba(0,0,0,0.15)",
       }}
@@ -44,7 +42,7 @@ export function Card({ rotateX, scale, children }: CardProps) {
       <div className="h-full w-full overflow-hidden rounded-2xl bg-transparent md:p-4">
         {children}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -53,14 +51,21 @@ interface ContainerScrollProps {
   children: ReactNode;
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 /**
  * ContainerScroll sets up a scroll container with perspective and provides
- * header and card animations based on scroll progress.
+ * header and card animations based on scroll progress. Progress is tracked
+ * with a plain scroll listener rather than Framer Motion's useScroll, since
+ * that hook's scroll tracking was silently stuck at 0 in Chrome (desktop and
+ * mobile) while working correctly in Edge, with no thrown errors.
  */
 export default function ContainerScroll({ titleComponent, children }: ContainerScrollProps) {
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: containerRef });
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Update breakpoint flag on resize
   useEffect(() => {
@@ -72,11 +77,32 @@ export default function ContainerScroll({ titleComponent, children }: ContainerS
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Track scroll progress of the container: 0 when its top edge reaches the
+  // viewport top, 1 when its bottom edge reaches the viewport bottom.
+  useEffect(() => {
+    function handleScroll() {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const scrollableDistance = rect.height - window.innerHeight;
+      const scrolled = -rect.top;
+      const p = scrollableDistance > 0 ? clamp(scrolled / scrollableDistance, 0, 1) : 0;
+      setProgress(p);
+    }
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
+
   // Compute scale stops based on device width
   const scaleRange = isMobile ? [0.7, 0.9] : [1.05, 1];
-  const rotateX = useTransform(scrollYProgress, [0, 1], [20, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], scaleRange);
-  const translate = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const rotateX = 20 - 20 * progress;
+  const scale = scaleRange[0] + (scaleRange[1] - scaleRange[0]) * progress;
+  const translateY = -100 * progress;
 
   return (
     <div
@@ -84,7 +110,7 @@ export default function ContainerScroll({ titleComponent, children }: ContainerS
       className="h-[50rem] md:h-[60rem] flex items-center justify-center relative p-2 md:p-20"
     >
       <div className="w-full relative py-10 md:py-40" style={{ perspective: "1000px" }}>
-        <Header translate={translate} titleComponent={titleComponent} />
+        <Header translateY={translateY} titleComponent={titleComponent} />
         <Card rotateX={rotateX} scale={scale}>
           {children}
         </Card>
