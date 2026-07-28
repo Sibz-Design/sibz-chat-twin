@@ -337,3 +337,31 @@ text label.
 not just the containing div's bounding box, which is misleading here since the div is
 full-width regardless of padding) against the button's position — confirmed a clean 16px
 gap with no overlap.
+
+### `src/pages/Chat.tsx` — rephrased Skills quick-action to third person
+"What are your key skills?" read like it was asking the AI about its own skills, but the
+response is written entirely in third person about Siba (per the guardrail prompt's
+"describe him in third person" instruction). Changed to "What are Siba's key skills?" so
+the displayed question matches the answer's voice.
+**Verified live**: confirmed the button now sends the reworded question and the AI's
+third-person response reads consistently with it.
+
+### `src/index.css`, `index.html`, `src/App.tsx` — collapsed two conflicting dark palettes into one
+The site owner reported the site rendering with different colors in Edge (blue-ish) vs
+Chrome (black). Root cause: `index.css` defined two different dark color palettes
+(`:root` at hue 220/20% saturation, `.dark` at hue 222.2/84% saturation), with no `.light`
+class defined anywhere. An inline script in `index.html` picked `'dark'` or `'light'`
+per-browser based on `prefers-color-scheme`/localStorage — whichever browser resolved to
+`'light'` silently fell back to the unstyled `:root` defaults instead of an actual light
+theme. Edge and Chrome were resolving that system preference differently, landing on two
+different, both-unintentional palettes.
+
+There's no theme-toggle UI anywhere in the app, and every component fixed this session
+assumed a single dark aesthetic, so this branching was never serving a real purpose. Shown
+the site owner a side-by-side comparison of both palettes; they chose the `.dark` palette
+(the one Edge was showing) as the single, permanent theme. Merged its values into `:root`,
+removed the separate `.dark` class block, removed the inline detection script, removed the
+now-unused `useTheme()` call in `App.tsx`, and deleted `src/hooks/use-theme.tsx` (zero
+other importers).
+**Verified live**: confirmed no class is added to `<html>` anymore and `--background`
+resolves to the chosen palette's value unconditionally, in every browser.
