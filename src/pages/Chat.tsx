@@ -596,7 +596,7 @@ export default function Chat() {
             >
               Badges
             </Button>
-            <Button variant="outline" onClick={() => handleSendMessage('What are your key skills?')}>
+            <Button variant="outline" onClick={() => handleSendMessage("What are Siba's key skills?")}>
               Skills
             </Button>
             <Button variant="outline" onClick={() => handleSendMessage('Summarize your experience')}> 
