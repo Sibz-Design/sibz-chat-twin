@@ -388,3 +388,19 @@ matching the expected math exactly).
 of this fix (it has no other usages in `src/`). Not removed yet - the site owner may want
 to weigh in on whether to drop it, similar to the earlier decision to leave other unused
 dependencies alone.
+
+### `src/components/ui/container-scroll.tsx` — follow-up: fixed the real root cause on mobile
+The previous fix above still didn't work on the site owner's actual phone. Real root cause:
+the scroll range was computed as container height minus viewport height. On mobile the
+container is 800px tall (`h-[50rem]`), and real phone viewport heights are frequently close
+to or taller than that (the reported device measured exactly 375x812) - making the
+computed range zero or negative. The code explicitly forced progress to stay at 0 whenever
+the range wasn't positive, exactly matching the "permanently stuck" symptom, regardless of
+how much the user actually scrolled.
+
+Switched to a fixed 400px scroll distance instead of the container/viewport height
+difference, so the animation always has real room to play out no matter how a given
+device's viewport height compares to the container's height.
+**Verified live** at the exact 375x812 dimensions from the reported screenshot: scrolling
+200px now correctly produces `rotateX(10deg) scale(0.8)` (50% progress) instead of staying
+stuck at the initial `rotateX(20deg) scale(0.7)`.
