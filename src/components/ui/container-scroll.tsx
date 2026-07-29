@@ -77,16 +77,22 @@ export default function ContainerScroll({ titleComponent, children }: ContainerS
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Track scroll progress of the container: 0 when its top edge reaches the
-  // viewport top, 1 when its bottom edge reaches the viewport bottom.
+  // Track scroll progress: 0 when the container's top edge reaches the
+  // viewport top, 1 after scrolling a fixed distance past that point. Using a
+  // fixed distance (rather than container height minus viewport height)
+  // guarantees a real scroll range to animate over regardless of how the
+  // container's height compares to the viewport's - on mobile the container
+  // height and viewport height can end up nearly equal (or the viewport even
+  // taller), which left zero or negative scroll range and made the animation
+  // permanently stuck at its start.
   useEffect(() => {
+    const ANIMATION_SCROLL_DISTANCE = 400;
     function handleScroll() {
       const el = containerRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const scrollableDistance = rect.height - window.innerHeight;
       const scrolled = -rect.top;
-      const p = scrollableDistance > 0 ? clamp(scrolled / scrollableDistance, 0, 1) : 0;
+      const p = clamp(scrolled / ANIMATION_SCROLL_DISTANCE, 0, 1);
       setProgress(p);
     }
     handleScroll();
