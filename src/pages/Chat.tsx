@@ -9,6 +9,7 @@ import { Projects } from "@/components/Projects";
 import { Certificates } from "@/components/Certificates";
 import { Badges } from "@/components/Badges";
 import { Resume } from "@/components/Resume";
+import { getOrCreateClientId } from "@/lib/clientId";
 
 interface Message {
   id: string;
@@ -28,6 +29,26 @@ export default function Chat() {
   const isMounted = useRef(true);
   const [hasInitialQueryBeenHandled, setHasInitialQueryBeenHandled] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [rateLimitedUntil, setRateLimitedUntil] = useState<number | null>(null);
+  const [rateLimitSecondsLeft, setRateLimitSecondsLeft] = useState(0);
+  const clientIdRef = useRef<string>("");
+
+  if (!clientIdRef.current) {
+    clientIdRef.current = getOrCreateClientId();
+  }
+
+  // Live countdown while rate-limited; clears itself once the window elapses.
+  useEffect(() => {
+    if (!rateLimitedUntil) return;
+    const tick = () => {
+      const secondsLeft = Math.max(0, Math.ceil((rateLimitedUntil - Date.now()) / 1000));
+      setRateLimitSecondsLeft(secondsLeft);
+      if (secondsLeft <= 0) setRateLimitedUntil(null);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [rateLimitedUntil]);
 
   useEffect(() => {
     document.title = "Chat with SibzAI | Sibz AI Portfolio";
@@ -60,6 +81,7 @@ export default function Chat() {
   const handleSendMessage = useCallback(async (message?: string) => {
     const messageText = message || input;
     if (!messageText.trim() || isLoading) return;
+    if (rateLimitedUntil && Date.now() < rateLimitedUntil) return;
 
     // Check environment variables
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -240,19 +262,46 @@ export default function Chat() {
     }
 
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/ai-chat-function`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
         },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({ message: messageText, clientId: clientIdRef.current }),
       });
 
+      if (response.status === 429) {
+        let info: { retryAfter?: number; error?: string } = {};
+        try {
+          info = await response.json();
+        } catch {
+          // ignore malformed body, fall back to defaults below
+        }
+        const retryAfter = Number(info.retryAfter ?? 60);
+        setRateLimitedUntil(Date.now() + retryAfter * 1000);
+        const rateLimitMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `You're sending messages a little too fast. Please wait ${retryAfter}s before trying again.`,
+          role: 'assistant',
+          timestamp: new Date(),
+        };
+        if (isMounted.current) {
+          setMessages(prev => [...prev, rateLimitMessage]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Response error:', errorText);
-        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+        let errorMessageText = `Server responded with ${response.status}`;
+        try {
+          const errorJson = await response.json();
+          if (errorJson?.error) errorMessageText = errorJson.error;
+        } catch {
+          // response wasn't JSON; keep the generic status-based message
+        }
+        throw new Error(errorMessageText);
       }
 
       // Check if response is actually streaming
@@ -409,7 +458,7 @@ export default function Chat() {
         setIsLoading(false);
       }
     }
-  }, [input, isLoading]);
+  }, [input, isLoading, rateLimitedUntil]);
 
   useEffect(() => {
     const initialQuery = searchParams.get("query");
@@ -681,19 +730,28 @@ export default function Chat() {
       {/* Input */}
       <div className="border-t border-border bg-card/50 backdrop-blur-sm p-6">
         <div className="container mx-auto max-w-4xl">
+          {rateLimitedUntil && rateLimitSecondsLeft > 0 && (
+            <div className="mb-3 text-sm text-center text-muted-foreground bg-muted/50 rounded-md py-2">
+              Rate limit reached — you can send another message in {rateLimitSecondsLeft}s
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="flex gap-3">
             <Input
-              placeholder="Type your message..."
+              placeholder={
+                rateLimitedUntil && rateLimitSecondsLeft > 0
+                  ? `Please wait ${rateLimitSecondsLeft}s...`
+                  : "Type your message..."
+              }
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               className="flex-1 bg-background"
-              disabled={isLoading}
+              disabled={isLoading || (!!rateLimitedUntil && rateLimitSecondsLeft > 0)}
             />
             <Button
               type="submit"
               variant="hero"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || (!!rateLimitedUntil && rateLimitSecondsLeft > 0)}
               aria-label="Send message"
             >
               <Send className="w-4 h-4" />

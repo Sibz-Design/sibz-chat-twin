@@ -71,8 +71,17 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-5. **Deploy Edge Functions**
+   Set the edge function secrets (see [Rate Limiting, Caching & Security](#-rate-limiting-caching--security) for the full list and defaults):
    ```bash
+   supabase secrets set RATE_LIMIT_SALT=$(openssl rand -hex 32)
+   supabase secrets set ALLOWED_ORIGINS=https://sibz-chat-twin.vercel.app,http://localhost:8080
+   ```
+
+5. **Apply database migrations, then deploy Edge Functions**
+   ```bash
+   # Creates the rate_limit_events / prompt_cache tables and RPCs
+   supabase db push
+
    # Deploy the chat function to Supabase
    supabase functions deploy chat
    ```
@@ -143,11 +152,14 @@ sibz-chat-twin/
 │   ├── components/            # React components
 │   ├── pages/                # Application pages
 │   ├── hooks/                # Custom React hooks
+│   ├── lib/                  # Utility functions (clientId, etc.)
 │   └── utils/                # Utility functions
 ├── supabase/                  # Supabase configuration
 │   ├── functions/            
-│   │   ├── chat/             # AI chat Edge Function
-│   │   └── send-email-function/ # Contact form Edge Function
+│   │   ├── chat/             # AI chat Edge Function (rate-limited, cached, validated)
+│   │   ├── send-email-function/ # Contact form Edge Function
+│   │   └── _shared/          # Shared rate limiting/validation/cache/CORS modules
+│   ├── migrations/            # Rate-limit + prompt-cache schema
 │   ├── config.toml           # Supabase configuration
 │   └── seed.sql              # Database seed data
 ├── package.json              # Frontend dependencies
@@ -178,6 +190,46 @@ The chatbot is configured to:
 - Maintain conversation context
 - Provide responses as Sibabalwe's digital twin
 
+## 🛡️ Rate Limiting, Caching & Security
+
+The `chat` Edge Function is backed by a small, modular security layer split across
+`supabase/functions/_shared/` so it can be reused by other functions later:
+
+| Module | Responsibility |
+| --- | --- |
+| `_shared/identity.ts` | Builds a salted, hashed rate-limit key from the client ID (persisted in `localStorage`) + source IP — neither alone can be rotated to dodge limits, and the raw IP is never stored. |
+| `_shared/rateLimiter.ts` | Calls the `check_and_record_rate_limit` Postgres RPC, which does an atomic 3-tier **sliding-window** check (10/min, 50/hour, 100/day by default) per identifier. |
+| `_shared/validation.ts` | Input validation — message/history type checks, length limits, history item count limits. |
+| `_shared/promptGuard.ts` | Heuristic prompt-injection scanner (blocks known jailbreak/override phrasing) — paired with delimiting the user's message in the system prompt so the model never treats it as instructions. |
+| `_shared/cache.ts` | SHA-256 hashes the (stateless, first-turn) prompt and reads/writes `prompt_cache` to skip redundant Cohere calls for repeated questions. |
+| `_shared/cors.ts` | Origin allow-list, configurable via `ALLOWED_ORIGINS`. |
+
+Database side (`supabase/migrations/20260729120000_rate_limiting_and_prompt_cache.sql`):
+- `rate_limit_events` — append-only log used for the sliding window; RLS-locked, only `service_role` can call the RPC.
+- `prompt_cache` — hash → cached Cohere response + TTL.
+- `cleanup_expired_records()` — deletes rows older than the widest window / past their TTL. Scheduled hourly via `pg_cron` (best-effort; enable the extension in **Supabase Dashboard → Database → Extensions** if the migration reports it couldn't schedule the job), with an opportunistic call from the edge function itself as a fallback.
+
+On rate-limit rejection, the function returns **HTTP 429** with a `Retry-After` header and a JSON body (`retryAfter`, `limitedWindow`, per-window `limits`) that the frontend uses to render a live countdown and disable the input until it elapses (`src/pages/Chat.tsx`).
+
+### Environment variables
+
+All of these are Edge Function secrets (`supabase secrets set NAME=value`), not `VITE_*` frontend vars:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `COHERE_API_KEY` | — (required) | Cohere API key |
+| `RATE_LIMIT_SALT` | dev fallback string | Salt used to hash the rate-limit identifier — **set a real random secret in production** |
+| `RATE_LIMIT_PER_MINUTE` | `10` | Sliding-window request cap per minute |
+| `RATE_LIMIT_PER_HOUR` | `50` | Sliding-window request cap per hour |
+| `RATE_LIMIT_PER_DAY` | `100` | Sliding-window request cap per day |
+| `MAX_MESSAGE_LENGTH` | `2000` | Max characters allowed in `message` |
+| `MAX_HISTORY_ITEMS` | `20` | Max messages allowed in `history` |
+| `MAX_HISTORY_ITEM_LENGTH` | `4000` | Max characters per history item |
+| `MAX_BODY_BYTES` | `32000` | Max request body size (via `Content-Length`) |
+| `CACHE_TTL_SECONDS` | `3600` | How long a cached response stays valid |
+| `CLEANUP_SAMPLE_RATE` | `0.02` | Probability a request also triggers opportunistic DB cleanup |
+| `ALLOWED_ORIGINS` | `https://sibz-chat-twin.vercel.app,http://localhost:8080` | Comma-separated CORS allow-list |
+
 ## 🚢 Deployment
 
 ### Frontend Deployment (Lovable)
@@ -194,15 +246,22 @@ The chatbot is configured to:
    supabase link --project-ref your-project-ref
    ```
 
-2. Deploy Edge Functions:
+2. Push database migrations (creates the rate-limit/cache tables and RPCs):
+   ```bash
+   supabase db push
+   ```
+
+3. Deploy Edge Functions:
    ```bash
    supabase functions deploy chat
    ```
 
-3. Configure CORS in the function responses (see Configuration above)
+4. Configure CORS in the function responses (see Configuration above)
 
-3. Set environment variables in Supabase Dashboard:
+5. Set environment variables/secrets in Supabase Dashboard (or `supabase secrets set`):
    - `COHERE_API_KEY`
+   - `RATE_LIMIT_SALT` (a real random secret — see [Rate Limiting, Caching & Security](#-rate-limiting-caching--security))
+   - Optionally override `RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_PER_HOUR`, `RATE_LIMIT_PER_DAY`, `CACHE_TTL_SECONDS`, `ALLOWED_ORIGINS`, etc.
 
 ## 🤝 Contributing
 

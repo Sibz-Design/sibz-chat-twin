@@ -4,13 +4,6 @@
 # working directory name when running `supabase init`.
 project_id = "iojpqsycbvcaqrpudnwu"
 
-[hosting]
-  [[hosting.rewrites]]
-  source = "/:path*"
-  destination = "/index.html"
-  status = 200
-  type = "rewrite"
-
 [api]
 enabled = true
 # Port to use for the API URL.
