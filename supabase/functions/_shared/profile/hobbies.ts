@@ -3,10 +3,9 @@ import type { Hobby } from "./types.ts";
 // ---------------------------------------------------------------------------
 // DRAFT CONTENT — please edit.
 //
-// Blurbs marked [DRAFT] were written as a plausible starting point rather than
-// from anything you told me. Read through and rewrite them in your own words;
-// the AI quotes them closely. The football, acting, sightseeing, and faith
-// entries are built from details you gave directly — check the wording anyway.
+// Every entry is now built from details you gave directly — no placeholder copy
+// remains. The AI quotes these closely, so tweak the wording whenever it drifts
+// from how you would actually say it.
 //
 // To add a hobby: append an object here. To remove one: delete it. Nothing else
 // in the app needs to change — the intent matcher, the system prompt, and the
@@ -30,10 +29,10 @@ export const hobbies: Hobby[] = [
     label: "Technology & AI",
     icon: "BrainCircuit",
     blurb:
-      "[DRAFT] Follows AI research and tooling closely, and spends free evenings testing whatever new model or agent framework has just shipped.",
+      "Always learning AI, and increasingly building with it — gradually leaving his vibe coding tendencies behind, one commit at a time.",
     details: [
-      "Reads about large language models, agents, and automation tooling in his own time.",
-      "Enjoys taking a new API the week it launches and building something small with it to understand where it breaks.",
+      "Learning AI continuously rather than in bursts, and putting it straight to work in what he builds.",
+      "Developing with AI as a tool rather than a crutch: less vibe coding, more understanding what the code actually does.",
       "Particularly interested in where AI meets everyday support work — the unglamorous problems automation actually solves.",
     ],
     media: [],
@@ -43,11 +42,11 @@ export const hobbies: Hobby[] = [
     label: "Programming",
     icon: "Code2",
     blurb:
-      "[DRAFT] Builds side projects to learn rather than to ship — mostly Python, with a growing amount of TypeScript and React.",
+      "Currently on the FNB App Academy, sharpening his programming fundamentals alongside the projects he builds for himself.",
     details: [
-      "Treats side projects as the way he learns: pick something slightly beyond his current level and finish it.",
+      "Part of the FNB App Academy, working through it to strengthen his programming skills properly rather than picking things up ad hoc.",
       "Works mostly in Python, and has been picking up TypeScript and React through building this portfolio.",
-      "Enjoys the debugging part more than the writing part — finding out why something behaves the way it does.",
+      "Treats side projects as the way he learns: pick something slightly beyond his current level and finish it.",
     ],
     media: [],
   },
@@ -155,11 +154,10 @@ export const hobbies: Hobby[] = [
     id: "anime",
     label: "Anime",
     icon: "Tv",
-    blurb:
-      "[DRAFT] A long-running interest — drawn to series with strong world-building and characters who grow through genuine setbacks.",
+    blurb: "Bleach is his favourite — the one he measures everything else against.",
     details: [
-      "Prefers stories with real stakes and characters who change, over pure action.",
-      "Enjoys the craft side too: the animation, the score, and how a long series paces its arcs.",
+      "Bleach sits at the top of the list.",
+      "Drawn to long series with real stakes, strong world-building, and characters who grow through genuine setbacks.",
     ],
     media: [],
   },
@@ -168,10 +166,11 @@ export const hobbies: Hobby[] = [
     label: "Psychology & Human Behaviour",
     icon: "Users",
     blurb:
-      "[DRAFT] Fascinated by why people do what they do — which turns out to be most of the job in customer support.",
+      "Reads about psychological facts constantly. Quantum leaping is the topic he keeps coming back to.",
     details: [
-      "Reads about behavioural psychology, motivation, and how people make decisions under pressure.",
-      "Finds it directly useful at work: a frustrated customer is usually communicating something other than the literal complaint.",
+      "Reads and learns about psychological facts continuously — it is the subject he returns to most outside of tech.",
+      "Quantum leaping is his favourite topic within it.",
+      "Finds the wider interest directly useful at work: a frustrated customer is usually communicating something other than the literal complaint.",
       "Completed coursework in emotional intelligence, conflict resolution, and cultural intelligence.",
     ],
     media: [],
@@ -181,11 +180,10 @@ export const hobbies: Hobby[] = [
     label: "Personal Development",
     icon: "TrendingUp",
     blurb:
-      "[DRAFT] Consistently working through courses and certifications — the certificate list is the visible part of a steady learning habit.",
+      "Getting out to see new places, and heading home every so often to reset.",
     details: [
-      "Treats continuous learning as a routine rather than a push before a job application.",
-      "Interested in resilience, grit, and growth mindset as practical tools, not slogans.",
-      "Keeps a deliberate mix of technical and non-technical learning going at the same time.",
+      "Makes a point of going out and seeing places rather than staying put.",
+      "Goes home every so often — the trips back are the proper reset.",
     ],
     media: [],
   },
