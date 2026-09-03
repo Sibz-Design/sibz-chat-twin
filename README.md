@@ -98,14 +98,90 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
 
 ### AI Digital Twin Architecture
 
-1. **User Input Processing**: Messages are sent to the Supabase Edge Function (except quick actions and queries containing "project"/"badge"/"experience", which render visuals instantly)
-2. **AI Generation**: Cohere AI processes the message using a system prompt describing Sibabalwe's skills, projects, and experience
-3. **Streaming Response**: Real-time streaming of AI responses back to the frontend
+Every request goes to the Supabase Edge Function. The frontend holds no knowledge
+about Siba and does no intent matching — it renders whatever the server returns.
+
+1. **Intent classification** — `_shared/intent.ts` scores the message against
+   weighted patterns. High-confidence questions ("what are his hobbies", "show me
+   his projects") are answered directly from the profile data: no model call, no
+   latency, no chance of a hallucinated detail.
+2. **Model fallback** — anything ambiguous goes to Cohere with a system prompt
+   generated from the same profile data, so the model and the cards can never
+   disagree. The model appends a `[[cards: ...]]` directive, which the function
+   strips and turns into typed card instructions.
+3. **Response envelope** — every reply is `{ text, cards, followUps, source }`.
+   The server decides *what* to show; the frontend decides *how* to render it.
+
+### The profile knowledge base
+
+`supabase/functions/_shared/profile/` is the single source of truth for
+everything the portfolio knows about Siba. It is imported verbatim by both the
+edge function (Deno) and the React frontend (via the `@profile` alias), so the
+AI's answers and the visual cards always agree.
+
+| File | Contains |
+| --- | --- |
+| `identity.ts` | Name, headline, location, avatar path, bio, links |
+| `career.ts` | Roles and highlights |
+| `skills.ts` | Skill groups |
+| `projects.ts` | Project cards |
+| `hobbies.ts` | Hobbies and personal interests, including photos and clips |
+| `education.ts` | Education, certifications, badges |
+| `goals.ts` | Professional goals, languages, off-limits topics |
+| `suggestions.ts` | Conversation starters and follow-up chips |
+
+**To add a hobby, project, or skill:** edit the relevant array. The system prompt,
+the intent answers, and the visual cards all follow automatically — no chatbot
+logic to touch. Run `npm run test:intent` afterwards.
+
+Constraints these files must respect (they run under Deno as well as Vite):
+
+- No React, no JSX, no `@/` alias imports, no bundler asset imports.
+- Images are `public/` path strings (e.g. `/projects/foo.png`), not imports.
+- Relative imports need an explicit `.ts` extension.
+- **Everything here ships in the browser bundle — never put private data in it.**
+
+### Hobby media
+
+Each hobby can carry photos and clips, shown as a thumbnail strip that opens a
+lightbox. Add them to the `media` array for that hobby:
+
+```ts
+media: [
+  { kind: "image", src: "/hobbies/football/man-city-shirt.jpg",
+    alt: "Siba wearing a Manchester City shirt", caption: "In the Man City shirt." },
+  { kind: "video", src: "/hobbies/acting/short-film.mp4",
+    poster: "/hobbies/acting/short-film-poster.jpg", alt: "Clip from the short film" },
+  { kind: "embed", src: "https://www.youtube.com/embed/VIDEO_ID",
+    alt: "The short film Siba acted in" },
+]
+```
+
+Files go in `public/hobbies/<hobby-id>/` — see `public/hobbies/README.md` for the
+expected filenames, how to generate a video poster frame, and when to host a
+video externally instead of committing it. Anything that fails to load is
+dropped from the gallery at runtime, so listing media before the file exists is
+safe: the strip simply doesn't render.
+
+Videos never autoplay, and `alt` text is required on every item.
+
+### Profile photo
+
+Drop a square photo at `public/profile/siba.jpg` and it appears on the profile
+card whenever someone asks who Siba is. Until then the card falls back to the
+existing portrait, so nothing breaks. To use a different filename, update
+`avatar` in `identity.ts`.
 
 ### Key Components
 
-- **Edge Function (`/supabase/functions/chat/index.ts`)**: Handles AI processing via Cohere
-- **Streaming Interface**: Server-sent events for real-time conversation flow
+- **Edge Function (`/supabase/functions/chat/index.ts`)** — orchestrates validation,
+  rate limiting, intent classification, caching, and the Cohere call
+- **`_shared/intent.ts`** — deterministic intent scoring
+- **`_shared/answers.ts`** — deterministic replies composed from profile data
+- **`_shared/prompt.ts`** — generates the system prompt; parses card directives
+- **`src/lib/chatClient.ts`** — typed transport layer for the frontend
+- **`src/components/chat/`** — card renderers (profile, hobbies, skills, contact,
+  experience) plus the message, empty-state, and suggestion-chip components
 
 ## 💻 Development
 
@@ -114,6 +190,7 @@ An intelligent AI chatbot portfolio that serves as the digital twin of Sibabalwe
 - `npm run dev` - Start the development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm run test:intent` - Run the intent-classifier and profile checks
 - `supabase start` - Start local Supabase instance
 - `supabase functions serve` - Serve functions locally
 - `supabase functions deploy chat` - Deploy chat function
@@ -150,15 +227,18 @@ supabase functions serve --env-file .env.local
 sibz-chat-twin/
 ├── src/                        # React frontend application
 │   ├── components/            # React components
+│   │   └── chat/             # Chat cards, message rendering, empty state
 │   ├── pages/                # Application pages
 │   ├── hooks/                # Custom React hooks
-│   ├── lib/                  # Utility functions (clientId, etc.)
+│   ├── lib/                  # chatClient (transport), clientId, utils
 │   └── utils/                # Utility functions
 ├── supabase/                  # Supabase configuration
 │   ├── functions/            
 │   │   ├── chat/             # AI chat Edge Function (rate-limited, cached, validated)
 │   │   ├── send-email-function/ # Contact form Edge Function
-│   │   └── _shared/          # Shared rate limiting/validation/cache/CORS modules
+│   │   └── _shared/          # Rate limiting, validation, cache, CORS, intent
+│   │       └── profile/      # ⭐ Knowledge base — single source of truth,
+│   │                         #    shared with the frontend via @profile
 │   ├── migrations/            # Rate-limit + prompt-cache schema
 │   ├── config.toml           # Supabase configuration
 │   └── seed.sql              # Database seed data
@@ -186,8 +266,9 @@ Key configuration in your Edge Function:
 ### AI Configuration
 
 The chatbot is configured to:
-- Use Cohere's Command-R-Plus model
-- Maintain conversation context
+- Use Cohere's `command-r-08-2024` model
+- Maintain conversation context (the last 8 turns are sent as history)
+- Answer only from the profile knowledge base, never from general knowledge
 - Provide responses as Sibabalwe's digital twin
 
 ## 🛡️ Rate Limiting, Caching & Security
