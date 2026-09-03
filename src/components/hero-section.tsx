@@ -8,6 +8,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
 import ContainerScroll from "@/components/ui/container-scroll";
 import { starters } from "@profile";
+import { DownloadCV } from "@/components/chat/DownloadCV";
 
 // Shares the chat's conversation starters so the hero can never offer a
 // question the chat handles differently. Four fit the two-column grid.
@@ -138,6 +139,7 @@ export function HeroSection() {
             Badges
           </Link>
         </Button>
+        <DownloadCV variant="outline" size="default" />
       </div>
     </div>
   </ContainerScroll>

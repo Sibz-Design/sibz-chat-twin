@@ -1,5 +1,6 @@
 import { Briefcase, GraduationCap } from "lucide-react";
 import { education, languages, roles } from "@profile";
+import { DownloadCV } from "./DownloadCV";
 
 /**
  * Work-history timeline. Replaces the old hardcoded <Resume /> component — the
@@ -40,6 +41,10 @@ export function ExperienceCard() {
           </li>
         ))}
       </ol>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <DownloadCV showMeta />
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-3 pt-1">
         <div className="rounded-lg border border-border/60 bg-card/40 p-4">
