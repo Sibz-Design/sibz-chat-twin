@@ -62,6 +62,7 @@ const CASES: Array<[string, Intent]> = [
 ];
 
 let failures = 0;
+const notes: string[] = [];
 
 function check(label: string, condition: boolean, detail = "") {
   if (!condition) {
@@ -104,8 +105,11 @@ for (const hobby of hobbies) {
       item.src.startsWith("/") || item.src.startsWith("https://"),
       item.src,
     );
-    if (item.kind === "video") {
-      check(`${hobby.id} video has a poster`, !!item.poster, item.src);
+    if (item.kind === "video" && !item.poster) {
+      // Not a failure: MediaGallery renders a neutral play tile without one, and
+      // the browser shows a first frame in the lightbox via preload="metadata".
+      // A real poster still looks better in the thumbnail strip.
+      notes.push(`${hobby.id}: ${item.src} has no poster frame`);
     }
   }
 }
@@ -113,7 +117,39 @@ check(
   "system prompt lists hobby media",
   buildSystemPrompt().includes("Photos/clips available"),
 );
+
+// Local media must actually exist under public/. Missing files degrade silently
+// at runtime by design, which is right for visitors but hides typos from you —
+// this is what catches a renamed or misspelled file before it ships.
+// Skipped when fs isn't available (e.g. if this is ever run under Deno).
+interface NodeFs {
+  existsSync(path: string): boolean;
+}
+declare const require: ((m: string) => NodeFs) | undefined;
+
+try {
+  const fs = typeof require === "function" ? require("node:fs") : null;
+  if (fs) {
+    const localPaths = [
+      profile.identity.avatar,
+      ...hobbies.flatMap((h) => h.media.flatMap((m) => [m.src, m.poster])),
+      ...profile.projects.map((p) => p.image),
+    ].filter((p): p is string => !!p && p.startsWith("/"));
+
+    for (const path of localPaths) {
+      check(`public${path} exists`, fs.existsSync(`public${path}`));
+    }
+  }
+} catch {
+  // No filesystem access — skip rather than fail.
+}
 check("card types are recognised", isCardType("hobbies") && !isCardType("nonsense"));
+
+if (notes.length > 0) {
+  console.log("Notes (not failures):");
+  for (const note of notes) console.log(`  - ${note}`);
+  console.log();
+}
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

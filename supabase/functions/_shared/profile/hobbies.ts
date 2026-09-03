@@ -65,9 +65,9 @@ export const hobbies: Hobby[] = [
     media: [
       {
         kind: "image",
-        src: "/hobbies/football/man-city-shirt.jpg",
-        alt: "Siba wearing a Manchester City shirt",
-        caption: "In the Man City shirt.",
+        src: "/hobbies/football/man_city.jpeg",
+        alt: "Siba smiling in a light blue Manchester City home shirt on a grass field at golden hour",
+        caption: "In the City shirt.",
       },
     ],
   },
@@ -84,22 +84,27 @@ export const hobbies: Hobby[] = [
     media: [
       {
         kind: "video",
-        src: "/hobbies/acting/short-film.mp4",
-        poster: "/hobbies/acting/short-film-poster.jpg",
+        src: "/hobbies/acting/take1.mp4",
         alt: "Clip from the short film Siba acted in",
         caption: "A clip from the short film.",
       },
       {
         kind: "image",
-        src: "/hobbies/acting/on-set-1.jpg",
-        alt: "Siba on the set of the short film",
-        caption: "On set.",
+        src: "/hobbies/acting/onset.jpeg",
+        alt: "The crew filming a scene — camera operator, someone holding the script, and Siba in position",
+        caption: "The crew mid-scene.",
       },
       {
         kind: "image",
-        src: "/hobbies/acting/on-set-2.jpg",
-        alt: "Siba on the set of the short film",
-        caption: "On set.",
+        src: "/hobbies/acting/action.jpeg",
+        alt: "A scene being filmed on a tripod-mounted camera, the shot visible on the flip-out screen",
+        caption: "Rolling.",
+      },
+      {
+        kind: "image",
+        src: "/hobbies/acting/acting.jpeg",
+        alt: "A camera operator filming a scene over the shoulder",
+        caption: "Behind the camera.",
       },
     ],
   },
@@ -116,10 +121,15 @@ export const hobbies: Hobby[] = [
     media: [
       {
         kind: "video",
-        src: "/hobbies/sightseeing/aesthetic-view.mp4",
-        poster: "/hobbies/sightseeing/aesthetic-view-poster.jpg",
+        src: "/hobbies/sightseeing/views.mp4",
         alt: "Video of a scenic view Siba filmed",
         caption: "One of the views worth going back to.",
+      },
+      {
+        kind: "image",
+        src: "/hobbies/sightseeing/beach.jpeg",
+        alt: "Siba at the coast beside Lionel Smit's Assemble sculpture, with the sea and mountains behind",
+        caption: "By the Assemble sculpture, out on the coast.",
       },
     ],
   },
@@ -135,9 +145,9 @@ export const hobbies: Hobby[] = [
     media: [
       {
         kind: "image",
-        src: "/hobbies/faith/praying.jpg",
-        alt: "Siba praying in church",
-        caption: "In church.",
+        src: "/hobbies/faith/church.jpeg",
+        alt: "Siba worshipping with the congregation during a church service",
+        caption: "During the service.",
       },
     ],
   },

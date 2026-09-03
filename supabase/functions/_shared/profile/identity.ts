@@ -7,9 +7,9 @@ export const identity: Identity = {
   headline: "IT Support Specialist & AI/ML Enthusiast",
   location: "Cape Town, Western Cape, South Africa",
 
-  // Drop a photo at `public/profile/siba.jpg` to use it. While this is empty the
-  // ProfileCard falls back to the existing hero image, so nothing breaks.
-  avatar: "/profile/siba.jpg",
+  // If this file is missing the ProfileCard falls back to the hero portrait,
+  // so changing it is safe even before the new image is in place.
+  avatar: "/profile/Siba_Des_pp.jpeg",
   avatarAlt: "Sibabalwe Desemela",
 
   tagline: "Curiosity drives him. Solving problems sharpens his skills. Building solutions keeps him busy.",
