@@ -2,19 +2,20 @@ import type { Role } from "./types.ts";
 
 export const roles: Role[] = [
   {
-    title: "Customer Support Agent",
+    title: "Enterprise Support Agent",
     org: "Clickatell",
     location: "Cape Town, South Africa",
     period: "April 2026 – Present",
     current: true,
     summary:
-      "Frontline technical support for SMS and API messaging services, serving enterprise and developer customers.",
+      "Technical Support Specialist for Clickatell's enterprise and developer customers, covering SMS and API messaging services.",
     highlights: [
       "Troubleshoots delivery failures using system logs, delivery reports, and error codes.",
       "Supports customers with platform usage, API configuration, sender ID registration, short codes, and IP whitelisting.",
       "Escalates complex technical and network issues to Technical, NOC, and Vendor teams with detailed diagnostics.",
       "Translates technical issues into clear customer-facing explanations, progress updates, and resolutions.",
       "Logs and tracks incidents in Jira to maintain SLA compliance and reduce repeat contacts.",
+      "Recently promoted into the Enterprise Support Agent role, taking on Clickatell's enterprise accounts.",
     ],
   },
   {

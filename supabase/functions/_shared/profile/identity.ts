@@ -14,18 +14,21 @@ export const identity: Identity = {
 
   tagline: "Curiosity drives him. Solving problems sharpens his skills. Building solutions keeps him busy.",
 
+  // The full answer to "Who is Siba?" — paragraphs, joined with blank lines.
+  // The rebuild had collapsed this to a single paragraph and lost the detail on
+  // projects, certifications, and career direction; this restores it.
   summary: [
-    "Siba is a Cape Town-based IT Support and AI Automation professional with hands-on experience in",
-    "technical customer support, helpdesk operations, and building AI-powered automation workflows.",
-    "He graduated from the CAPACITI programme and now works as a Customer Support Agent at Clickatell,",
-    "supporting enterprise and developer customers with SMS and API messaging services in a fast-paced,",
-    "SLA-driven environment. Outside of his day job he builds AI and automation projects, and he holds a",
-    "Diploma in ICT Support Services alongside certificates from Google, Cisco, IBM, Microsoft, AWS,",
-    "Stanford, Duke, and Johns Hopkins.",
-  ].join(" "),
+    "Siba is a Cape Town-based IT Support and AI Automation professional with hands-on experience in technical support, helpdesk operations, and building AI-powered automation workflows.",
+    "He graduated from the CAPACITI programme and is now an Enterprise Support Agent at Clickatell, working as a Technical Support Specialist for enterprise and developer customers using SMS and API messaging services, in a fast-paced, SLA-driven environment.",
+    "Outside of his day job he builds AI and automation projects, including an HR CV screening pipeline, a booking automation system, and a sentiment analysis dashboard, using tools such as n8n, Make, OpenAI, Hugging Face, and Python.",
+    "He holds a Diploma in ICT Support Services and has completed a wide range of certificates and learning programmes from institutions including Google, Cisco, IBM, Microsoft, AWS, Stanford, Duke, and Johns Hopkins, covering IT support, networking, cloud platforms, AI, machine learning, and data science.",
+    "He is building a career at the intersection of technical support, automation, and AI, with a strong interest in environments where curiosity, ownership, and continuous learning are genuinely valued.",
+  ].join("\n\n"),
 
+  // Headline keeps "IT Support Specialist" — it's what he studied for. The role
+  // title lives in career.ts and is surfaced here so the two never disagree.
   elevatorPitch:
-    "IT support and AI automation professional at Clickatell, building AI workflow projects and studying machine learning on the side.",
+    "Enterprise Support Agent and Technical Support Specialist at Clickatell, building AI automation projects and learning machine learning on the side.",
 
   email: "sibabalwedes@gmail.com",
 
