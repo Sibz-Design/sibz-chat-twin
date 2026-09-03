@@ -45,6 +45,8 @@ const CASES: Array<[string, Intent]> = [
   ["Tell me about Siba's experience", "experience"],
   ["Where does he work?", "experience"],
   ["Summarize your experience", "experience"],
+  ["Can I download Siba's CV?", "experience"],
+  ["Where can I get his resume?", "experience"],
 
   ["How can I contact Siba?", "contact"],
   ["what's his email", "contact"],
@@ -132,6 +134,7 @@ try {
   if (fs) {
     const localPaths = [
       profile.identity.avatar,
+      profile.identity.cv?.path,
       ...hobbies.flatMap((h) => h.media.flatMap((m) => [m.src, m.poster])),
       ...profile.projects.map((p) => p.image),
     ].filter((p): p is string => !!p && p.startsWith("/"));

@@ -32,6 +32,12 @@ export const identity: Identity = {
 
   email: "sibabalwedes@gmail.com",
 
+  cv: {
+    path: "/Sibabalwe_Desemela_CV.pdf",
+    filename: "Sibabalwe_Desemela_CV.pdf",
+    meta: "PDF · 132 KB",
+  },
+
   links: [
     { label: "GitHub", url: "https://github.com/Sibz-Design" },
     { label: "LinkedIn", url: "https://www.linkedin.com/in/sibabalwe-desemela-554789253/" },

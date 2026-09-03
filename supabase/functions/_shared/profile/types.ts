@@ -36,6 +36,14 @@ export interface Identity {
   elevatorPitch: string;
   email: string;
   links: Link[];
+  /** Downloadable CV. `path` lives under `public/`; omit the field to hide every download button. */
+  cv?: {
+    path: string;
+    /** Filename the visitor's browser saves it as. */
+    filename: string;
+    /** Shown next to the button, e.g. "PDF · 132 KB". */
+    meta: string;
+  };
 }
 
 export interface Role {

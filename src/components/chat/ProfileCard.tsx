@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Expand, MapPin } from "lucide-react";
 import { identity, type MediaItem } from "@profile";
+import { DownloadCV } from "./DownloadCV";
 import { MediaLightbox } from "./MediaLightbox";
 import fallbackPortrait from "@/assets/shared _image.jpg";
 
@@ -71,6 +72,10 @@ export function ProfileCard() {
               {link.label}
             </a>
           ))}
+        </div>
+
+        <div className="mt-3 flex justify-center sm:justify-start">
+          <DownloadCV />
         </div>
       </div>
 

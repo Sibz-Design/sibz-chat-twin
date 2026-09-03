@@ -45,6 +45,15 @@ export function isCardType(value: string): value is CardType {
   return (ALL_CARD_TYPES as string[]).includes(value);
 }
 
+/**
+ * "a" or "an" for a job title. Vowel-letter test rather than a phonetic one —
+ * good enough for role titles, and it stops "a Enterprise Support Agent" the
+ * moment a title is renamed.
+ */
+function article(word: string): string {
+  return /^[aeiou]/i.test(word.trim()) ? "an" : "a";
+}
+
 function suggestionsFor(intent: Intent): string[] {
   return followUps[intent] ?? followUps.default;
 }
@@ -110,10 +119,12 @@ export function answerFromProfile(intent: Intent): ChatReply | null {
     case "experience":
       return {
         text: [
-          `${identity.shortName} is currently a ${currentRole.title} at ${currentRole.org} (${currentRole.period}).`,
+          `${identity.shortName} is currently ${article(currentRole.title)} ${currentRole.title} at ${currentRole.org} (${currentRole.period}).`,
           currentRole.summary,
           "",
-          "Here's the full work history:",
+          identity.cv
+            ? "Here's the full work history — his CV is downloadable below."
+            : "Here's the full work history:",
         ].join("\n"),
         cards: [{ type: "experience" }],
         followUps: suggestionsFor("experience"),
