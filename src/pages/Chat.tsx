@@ -1,23 +1,30 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Bot, Home, Loader2, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/enhanced-button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Bot, User, Send, Home, Loader2, Copy, Check } from "lucide-react";
-import SharedImage from "@/assets/shared _image.jpg";
-import { Projects } from "@/components/Projects";
-import { Certificates } from "@/components/Certificates";
-import { Badges } from "@/components/Badges";
-import { Resume } from "@/components/Resume";
+import { AssistantMessage } from "@/components/chat/AssistantMessage";
+import { EmptyState } from "@/components/chat/EmptyState";
+import { MessageText } from "@/components/chat/MessageText";
 import { getOrCreateClientId } from "@/lib/clientId";
+import { sendChatMessage, toHistory, type ChatCard } from "@/lib/chatClient";
+import { identity } from "@profile";
+import SharedImage from "@/assets/shared _image.jpg";
 
 interface Message {
   id: string;
+  role: "user" | "assistant";
   content: string;
-  role: 'user' | 'assistant';
+  cards: ChatCard[];
+  followUps: string[];
   timestamp: Date;
-  type?: 'text' | 'projects' | 'certificates' | 'badges' | 'resume';
-  data?: any;
+}
+
+let messageCounter = 0;
+function nextId(): string {
+  messageCounter += 1;
+  return `m${Date.now()}-${messageCounter}`;
 }
 
 export default function Chat() {
@@ -25,17 +32,36 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isMounted = useRef(true);
-  const [hasInitialQueryBeenHandled, setHasInitialQueryBeenHandled] = useState(false);
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [rateLimitedUntil, setRateLimitedUntil] = useState<number | null>(null);
   const [rateLimitSecondsLeft, setRateLimitSecondsLeft] = useState(0);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMounted = useRef(true);
+  const hasHandledInitialQuery = useRef(false);
   const clientIdRef = useRef<string>("");
+  // Read inside the send handler so the callback identity doesn't change on
+  // every message, which would restart the initial-query effect.
+  const messagesRef = useRef<Message[]>([]);
 
   if (!clientIdRef.current) {
     clientIdRef.current = getOrCreateClientId();
   }
+
+  messagesRef.current = messages;
+
+  useEffect(() => {
+    document.title = `Chat with SibzAI | ${identity.shortName} AI Portfolio`;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   // Live countdown while rate-limited; clears itself once the window elapses.
   useEffect(() => {
@@ -50,673 +76,173 @@ export default function Chat() {
     return () => clearInterval(interval);
   }, [rateLimitedUntil]);
 
-  useEffect(() => {
-    document.title = "Chat with SibzAI | Sibz AI Portfolio";
-  }, []);
+  const isRateLimited = !!rateLimitedUntil && rateLimitSecondsLeft > 0;
 
-  // Check environment variables on component mount
-  useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  /**
+   * Sends a message. All intent detection, knowledge, and card selection happen
+   * server-side — this only moves text in and renders what comes back.
+   */
+  const handleSendMessage = useCallback(
+    async (message?: string) => {
+      const text = (message ?? input).trim();
+      if (!text || isLoading) return;
+      if (rateLimitedUntil && Date.now() < rateLimitedUntil) return;
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing environment variables! Make sure .env file exists with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
-    }
-  }, []);
+      const history = toHistory(
+        messagesRef.current.map((m) => ({ role: m.role, content: m.content })),
+      );
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const handleSendMessage = useCallback(async (message?: string) => {
-    const messageText = message || input;
-    if (!messageText.trim() || isLoading) return;
-    if (rateLimitedUntil && Date.now() < rateLimitedUntil) return;
-
-    // Check environment variables
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Configuration error: Missing environment variables. Please check your .env file.",
-        role: 'assistant',
+      const userMessage: Message = {
+        id: nextId(),
+        role: "user",
+        content: text,
+        cards: [],
+        followUps: [],
         timestamp: new Date(),
       };
-      if (isMounted.current) {
-        setMessages(prev => [...prev, errorMessage]);
-      }
-      return;
-    }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: messageText,
-      role: 'user',
-      timestamp: new Date(),
-    };
-
-    // Special-case: handle "Who is Siba" (and variants) locally with a polished bio response
-    const normalized = messageText.trim().toLowerCase();
-
-    // Friendly greetings shouldn't be refused or sent to the AI - handle them locally
-    const isGreeting = /^(hi|hello|hey|yo|sup|hiya|howdy|good morning|good afternoon|good evening)[\s!.,]*$/.test(normalized);
-    if (isGreeting && isMounted.current) {
-      const greetingMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Hey there! I'm SibzAI, Siba's digital twin. Ask me about his skills, projects, experience, or how to get in touch.",
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage, greetingMsg]);
-      setInput("");
-      return;
-    }
-
-    const isWhoIsSiba =
-      /^who\s+is\s+(siba|sibz|sibabalwe)\??$/.test(normalized) ||
-      /^who['’]s\s+(siba|sibz)\??$/.test(normalized) ||
-      normalized.startsWith('who is siba') ||
-      normalized.startsWith('who is sibabalwe') ||
-      normalized.startsWith('who is sibz') ||
-      /\btell me about (siba|sibz|sibabalwe|him|his background|yourself)\b/.test(normalized) ||
-      /\bwhat does (siba|sibz|sibabalwe|he) do\b/.test(normalized) ||
-      /\bwhat is (his|siba's) role\b/.test(normalized) ||
-      /who are you/.test(normalized);
-
-    const isContactQuery = /\b(contact|reach|email|linkedin|connect|get in touch|how can i contact|how to contact|contact information|contact info|reach out)\b/.test(normalized);
-    const isSibaMentioned = /\b(siba|sibz|sibabalwe|sibzai)\b/.test(normalized);
-
-    // Include the same whole-word patterns used by the project/badge/experience/skills
-    // shortcuts below, so those quick-action buttons don't get refused before reaching
-    // their own dedicated handling further down.
-    const isSibaRelated =
-      isWhoIsSiba ||
-      isContactQuery ||
-      isSibaMentioned ||
-      /\bprojects?\b/.test(normalized) ||
-      /\bbadges?\b/.test(normalized) ||
-      /\bexperiences?\b/.test(normalized) ||
-      /\bskills?\b/.test(normalized);
-
-    if (!isSibaRelated && isMounted.current) {
-      const assistantRefusalMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Sorry, I can only answer questions about Siba Desemela.",
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage, assistantRefusalMsg]);
-      setInput("");
-      return;
-    }
-    if (isContactQuery && isMounted.current) {
-      const assistantContactMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        content: [
-          "Siba's contact details:",
-          "- Email: mailto:sibabalwedes@gmail.com",
-          "- LinkedIn: https://www.linkedin.com/in/sibabalwe-desemela-554789253/",
-        ].join('\n'),
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage, assistantContactMsg]);
-      setInput("");
-      return;
-    }
-
-    if (isWhoIsSiba && isMounted.current) {
-      const assistantWhoMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        content: [
-          'Siba (Sibabalwe Desemela) — IT Support Specialist & AI/ML Enthusiast',
-          '',
-          'Siba is a Cape Town-based IT Support and AI Automation professional with hands-on experience in technical customer support, helpdesk operations, and building AI-powered automation workflows.',
-          '',
-          'He recently graduated from the CAPACITI programme and currently works as a Customer Support Agent at Clickatell, supporting enterprise and developer customers with SMS and API messaging services in a fast-paced, SLA-driven environment.',
-          '',
-          'Outside of his day job, he builds AI and automation projects, including an HR CV screening pipeline, a booking automation system, and a sentiment analysis dashboard using tools like n8n, Make, OpenAI, Hugging Face, and Python.',
-          '',
-          'He holds a Diploma in ICT Support Services and has completed a wide range of certificates and learning programmes from institutions and platforms including Google, Cisco, IBM, Microsoft, AWS, Stanford, Duke, and Johns Hopkins, covering IT support, networking, cloud platforms, AI, machine learning, and data science.',
-          '',
-          'He is building a career at the intersection of technical support, automation, and AI, with a strong interest in environments where curiosity, ownership, and continuous learning are genuinely valued.',
-          '',
-          'Curiosity drives him. Solving problems sharpens his skills. Building solutions keeps him busy. Always learning, always experimenting.',
-          '',
-          'Links:',
-          '- GitHub: https://github.com/Sibz-Design',
-          '- LinkedIn: https://www.linkedin.com/in/sibabalwe-desemela-554789253/',
-        ].join('\n'),
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage, assistantWhoMsg]);
-      setInput("");
-      return;
-    }
-
-    // Special-case: any query containing the whole word "project"/"projects" should render visual projects immediately
-    if (/\bprojects?\b/.test(normalized) && isMounted.current) {
-      const projectsVisual: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '',
-        role: 'assistant',
-        timestamp: new Date(),
-        type: 'projects',
-      };
-      setMessages(prev => [...prev, userMessage, projectsVisual]);
-      setInput("");
-      return;
-    }
-
-    // Special-case: any query containing the whole word "badge"/"badges" should render badges immediately
-    if (/\bbadges?\b/.test(normalized) && isMounted.current) {
-      const badgesVisual: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '',
-        role: 'assistant',
-        timestamp: new Date(),
-        type: 'badges',
-      };
-      setMessages(prev => [...prev, userMessage, badgesVisual]);
-      setInput("");
-      return;
-    }
-
-    // Special-case: any query containing the whole word "experience" should show work experience
-    if (/\bexperiences?\b/.test(normalized) && isMounted.current) {
-      const experienceSummary: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Currently, I am a Technical Support Associate at Capaciti. Here is a summary of my work experience. For more details, please have a look at my resume.",
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      const experienceMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        content: "",
-        role: 'assistant',
-        timestamp: new Date(),
-        type: 'resume',
-      };
-      setMessages(prev => [...prev, userMessage, experienceSummary, experienceMessage]);
-      setInput("");
-      return;
-    }
-
-    if (isMounted.current) {
-      setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
       setInput("");
       setIsLoading(true);
-    }
 
-    try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ message: messageText, clientId: clientIdRef.current }),
-      });
+      const result = await sendChatMessage(text, history, clientIdRef.current);
+      if (!isMounted.current) return;
 
-      if (response.status === 429) {
-        let info: { retryAfter?: number; error?: string } = {};
-        try {
-          info = await response.json();
-        } catch {
-          // ignore malformed body, fall back to defaults below
+      if (result.kind === "ok") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: "assistant",
+            content: result.reply.text,
+            cards: result.reply.cards,
+            followUps: result.reply.followUps,
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        if (result.kind === "rate-limited") {
+          setRateLimitedUntil(Date.now() + result.retryAfter * 1000);
         }
-        const retryAfter = Number(info.retryAfter ?? 60);
-        setRateLimitedUntil(Date.now() + retryAfter * 1000);
-        const rateLimitMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `You're sending messages a little too fast. Please wait ${retryAfter}s before trying again.`,
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-        if (isMounted.current) {
-          setMessages(prev => [...prev, rateLimitMessage]);
-          setIsLoading(false);
-        }
-        return;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId(),
+            role: "assistant",
+            content: result.message,
+            cards: [],
+            followUps: [],
+            timestamp: new Date(),
+          },
+        ]);
       }
 
-      if (!response.ok) {
-        let errorMessageText = `Server responded with ${response.status}`;
-        try {
-          const errorJson = await response.json();
-          if (errorJson?.error) errorMessageText = errorJson.error;
-        } catch {
-          // response wasn't JSON; keep the generic status-based message
-        }
-        throw new Error(errorMessageText);
-      }
+      setIsLoading(false);
+    },
+    [input, isLoading, rateLimitedUntil],
+  );
 
-      // Check if response is actually streaming
-      const contentType = response.headers.get('content-type');
-
-      if (contentType && contentType.includes('application/json')) {
-        const json = await response.json();
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: json.message.content[0].text, // <--- Changed this line
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-        if (isMounted.current) {
-          setMessages(prev => [...prev, assistantMessage]);
-          setIsLoading(false);
-        }
-        return;
-      }
-      
-      // Handle non-stream plain text responses
-      if (contentType && (contentType.includes('text/plain') || contentType.includes('text/html'))) {
-        const text = await response.text();
-        const assistantMessagePlain: Message = {
-          id: (Date.now() + 1).toString(),
-          content: text,
-          role: 'assistant',
-          timestamp: new Date(),
-        };
-        if (isMounted.current) {
-          setMessages(prev => [...prev, assistantMessagePlain]);
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      let assistantMessage = '';
-      const assistantMessageId = (Date.now() + 1).toString();
-
-      // Add initial empty assistant message
-      if (isMounted.current) {
-        setMessages(prev => [...prev, {
-          id: assistantMessageId,
-          content: '',
-          role: 'assistant',
-          timestamp: new Date(),
-        }]);
-      }
-
-      // Handle streaming response (supports SSE and plain text)
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            break;
-          }
-
-          buffer += decoder.decode(value, { stream: true });
-
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) continue;
-
-            if (trimmedLine.startsWith('data: ')) {
-              const data = trimmedLine.slice(6).trim();
-
-              if (data === '[DONE]') {
-                if (isMounted.current) {
-                  setIsLoading(false);
-                }
-                return;
-              }
-              
-              if (data && data !== '') {
-                try {
-                  const parsed = JSON.parse(data);
-
-                  if (parsed.content) {
-                    let content = parsed.content;
-                    try {
-                      // Try to parse the content as JSON
-                      content = JSON.parse(content).content;
-                    } catch (e) {
-                      // If it's not a JSON string, use it as is
-                    }
-                    assistantMessage += content;
-                    if (isMounted.current) {
-                      setMessages(prev => prev.map(msg => 
-                        msg.id === assistantMessageId 
-                          ? { ...msg, content: assistantMessage } 
-                          : msg
-                      ));
-                    }
-                  } else if (parsed.error) {
-                    throw new Error(parsed.error);
-                  }
-                } catch (parseError) {
-                  console.error('JSON parse error:', parseError, 'Data:', data);
-                  // Don't throw here, continue processing
-                }
-              }
-            } else {
-              // Fallback: treat non-SSE plain text as content
-              assistantMessage += trimmedLine + '\n';
-              if (isMounted.current) {
-                setMessages(prev => prev.map(msg => 
-                  msg.id === assistantMessageId 
-                    ? { ...msg, content: assistantMessage } 
-                    : msg
-                ));
-              }
-            }
-          }
-        }
-      } finally {
-        // Flush any remaining buffer content after stream ends
-        if (buffer && buffer.trim()) {
-          assistantMessage += buffer;
-          if (isMounted.current) {
-            setMessages(prev => prev.map(msg => 
-              msg.id === assistantMessageId 
-                ? { ...msg, content: assistantMessage } 
-                : msg
-            ));
-          }
-        }
-        reader.releaseLock();
-      }
-    } catch (error) {
-      console.error('Error details:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `Sorry, I'm having trouble connecting right now. Error: ${error.message}`,
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      if (isMounted.current) {
-        setMessages(prev => [...prev, errorMessage]);
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [input, isLoading, rateLimitedUntil]);
-
+  // Deep links from the hero: /chat?query=... and the legacy /chat?show_badges=true.
   useEffect(() => {
-    const initialQuery = searchParams.get("query");
-    if (initialQuery && !hasInitialQueryBeenHandled) {
-      handleSendMessage(initialQuery);
-      setHasInitialQueryBeenHandled(true);
-    }
-    const showBadges = searchParams.get("show_badges");
-    if (showBadges === "true" && !hasInitialQueryBeenHandled) {
-      const badgeMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '',
-        role: 'assistant',
-        timestamp: new Date(),
-        type: 'badges'
-      };
-      setMessages(prev => [...prev, badgeMsg]);
-      setHasInitialQueryBeenHandled(true);
-      // Clean up the URL
-      searchParams.delete('show_badges');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, handleSendMessage, hasInitialQueryBeenHandled, setSearchParams]);
+    if (hasHandledInitialQuery.current) return;
 
-  // Prevent default form submission that might cause navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSendMessage();
+    const initialQuery = searchParams.get("query");
+    const showBadges = searchParams.get("show_badges") === "true";
+    if (!initialQuery && !showBadges) return;
+
+    hasHandledInitialQuery.current = true;
+    handleSendMessage(initialQuery || `Show me ${identity.shortName}'s badges`);
+
+    if (showBadges) {
+      searchParams.delete("show_badges");
+      setSearchParams(searchParams, { replace: true });
     }
-  };
+  }, [searchParams, setSearchParams, handleSendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSendMessage();
   };
-  
-  const hasVisualSection = messages.some(m => m.type === 'projects' || m.type === 'certificates' || m.type === 'badges');
 
-  // Formatting helpers for assistant messages
-  const escapeHtml = (unsafe: string) =>
-    unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id;
 
-  const renderTextWithLinks = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
-    return parts.map((part, idx) => {
-      if (urlRegex.test(part)) {
-        return (
-          <a key={idx} href={part} target="_blank" rel="noopener noreferrer" className="underline">
-            {part}
-          </a>
-        );
-      }
-      return <span key={idx}>{part}</span>;
-    });
-  };
-
-  const renderFormattedMessage = (text: string) => {
-    // Handle triple backtick code blocks first
-    const codeBlockRegex = /```([\s\S]*?)```/g;
-    const nodes: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = codeBlockRegex.exec(text)) !== null) {
-      const [full, codeContent] = match;
-      const start = match.index;
-      const before = text.slice(lastIndex, start);
-      if (before) {
-        // For normal text, preserve line breaks and linkify
-        before.split("\n").forEach((line, i, arr) => {
-          const noHeadings = line.replace(/^#{1,6}\s*/, "");
-          nodes.push(<span key={`t-${lastIndex}-${i}`}>{renderTextWithLinks(noHeadings)}</span>);
-          if (i < arr.length - 1) nodes.push(<br key={`br-${lastIndex}-${i}`} />)
-        });
-      }
-      nodes.push(
-        <pre key={`code-${start}`} className="mt-2 mb-2 rounded bg-muted p-3 overflow-auto">
-          <code>{codeContent}</code>
-        </pre>
-      );
-      lastIndex = start + full.length;
-    }
-    const after = text.slice(lastIndex);
-    if (after) {
-      after.split("\n").forEach((line, i, arr) => {
-        const noHeadings = line.replace(/^#{1,6}\s*/, "");
-        nodes.push(<span key={`t-end-${lastIndex}-${i}`}>{renderTextWithLinks(noHeadings)}</span>);
-        if (i < arr.length - 1) nodes.push(<br key={`br-end-${lastIndex}-${i}`} />)
-      });
-    }
-    return nodes;
-  };
-
-  const handleCopy = async (messageId: string, content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedMessageId(messageId);
-      setTimeout(() => setCopiedMessageId(null), 1500);
-    } catch (err) {
-      console.error('Copy failed', err);
-    }
-  };
-    
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
-              <img 
-                src={SharedImage} 
-                alt="Sibalwe Desemela" 
-                className="w-full h-full object-cover"
-              />
+    // A fixed-height column, not min-h-screen: the messages area owns the only
+    // scrollbar, so the composer stays pinned to the bottom of the viewport.
+    <div className="h-dvh bg-background flex flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 shrink-0 rounded-full overflow-hidden border-2 border-primary/20">
+              <img src={SharedImage} alt={identity.avatarAlt} className="w-full h-full object-cover" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">Chat with SibzAI</h1>
-              <p className="text-sm text-muted-foreground">AI Portfolio Assistant</p>
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold truncate">Chat with SibzAI</h1>
+              <p className="text-xs text-muted-foreground truncate">
+                {identity.shortName}'s digital twin
+              </p>
             </div>
           </div>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" size="sm" asChild>
             <Link to="/">
               <Home className="w-4 h-4" />
-              Home
+              <span className="hidden sm:inline">Home</span>
             </Link>
           </Button>
         </div>
       </header>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="container mx-auto max-w-4xl space-y-6">
-          {/* Quick actions */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const projectMsg: Message = {
-                  id: (Date.now() + 1).toString(),
-                  content: '',
-                  role: 'assistant',
-                  timestamp: new Date(),
-                  type: 'projects'
-                };
-                setMessages(prev => [...prev, projectMsg]);
-              }}
-            >
-              Projects
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                const certMsg: Message = {
-                  id: (Date.now() + 1).toString(),
-                  content: '',
-                  role: 'assistant',
-                  timestamp: new Date(),
-                  type: 'certificates'
-                };
-                setMessages(prev => [...prev, certMsg]);
-              }}
-            >
-              Certificates
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                const badgeMsg: Message = {
-                  id: (Date.now() + 1).toString(),
-                  content: '',
-                  role: 'assistant',
-                  timestamp: new Date(),
-                  type: 'badges'
-                };
-                setMessages(prev => [...prev, badgeMsg]);
-              }}
-            >
-              Badges
-            </Button>
-            <Button variant="outline" onClick={() => handleSendMessage("What are Siba's key skills?")}>
-              Skills
-            </Button>
-            <Button variant="outline" onClick={() => handleSendMessage('Summarize your experience')}> 
-              Experience
-            </Button>
-          </div>
-          {messages.length === 0 && (
-            <div className="text-center py-12">
-              <Bot className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Start a conversation</h2>
-              <p className="text-muted-foreground">Ask me anything about Sibabalwe's skills, projects, or experience!</p>
-            </div>
-          )}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-6">
+        <div className="container mx-auto max-w-3xl space-y-6">
+          {messages.length === 0 && !isLoading && <EmptyState onAsk={handleSendMessage} />}
 
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+              className={`flex gap-3 sm:gap-4 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-primary">
-                {message.role === 'user' ? (
+              <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-gradient-primary">
+                {message.role === "user" ? (
                   <User className="w-4 h-4 text-primary-foreground" />
                 ) : (
                   <Bot className="w-4 h-4 text-primary-foreground" />
                 )}
               </div>
-              <Card className={`relative max-w-2xl p-4 ${message.role === 'user' ? 'bg-primary/10 border-primary/20' : 'bg-card'}`}>
-                {message.type === 'projects' ? (
-                  <Projects />
-                ) : message.type === 'certificates' ? (
-                  <Certificates />
-                ) : message.type === 'badges' ? (
-                  <Badges />
-                ) : message.type === 'resume' ? (
-                  <Resume />
+
+              <Card
+                className={`p-4 min-w-0 ${
+                  message.role === "user"
+                    ? "max-w-[85%] sm:max-w-xl bg-primary/10 border-primary/20"
+                    : "flex-1 bg-card/60"
+                }`}
+              >
+                {message.role === "user" ? (
+                  <MessageText content={message.content} />
                 ) : (
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap break-words pr-12">
-                    {renderFormattedMessage(message.content)}
-                  </div>
+                  <AssistantMessage
+                    content={message.content}
+                    cards={message.cards}
+                    followUps={message.followUps}
+                    animate={message.id === lastAssistantId}
+                    onSelectFollowUp={handleSendMessage}
+                    followUpsDisabled={isLoading || isRateLimited}
+                  />
                 )}
-                {message.role === 'assistant' && message.type !== 'projects' && message.type !== 'certificates' && message.type !== 'badges' && (
-                  <div className="absolute top-2 right-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
-                      onClick={() => handleCopy(message.id, message.content)}
-                    >
-                      {copiedMessageId === message.id ? (
-                        <Check className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                )}
-                <span className="text-xs text-muted-foreground mt-2 block">
-                  {message.timestamp.toLocaleTimeString()}
+                <span className="text-[11px] text-muted-foreground mt-3 block">
+                  {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </Card>
             </div>
           ))}
 
           {isLoading && (
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-primary">
+            <div className="flex gap-3 sm:gap-4">
+              <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-gradient-primary">
                 <Bot className="w-4 h-4 text-primary-foreground" />
               </div>
-              <Card className="max-w-2xl p-4 bg-card">
+              <Card className="p-4 bg-card/60">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary/80" />
                   <span className="text-sm text-muted-foreground">Thinking...</span>
                 </div>
               </Card>
@@ -727,10 +253,9 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border bg-card/50 backdrop-blur-sm p-6">
-        <div className="container mx-auto max-w-4xl">
-          {rateLimitedUntil && rateLimitSecondsLeft > 0 && (
+      <div className="shrink-0 border-t border-border bg-card/50 backdrop-blur-sm px-4 sm:px-6 py-4">
+        <div className="container mx-auto max-w-3xl">
+          {isRateLimited && (
             <div className="mb-3 text-sm text-center text-muted-foreground bg-muted/50 rounded-md py-2">
               Rate limit reached — you can send another message in {rateLimitSecondsLeft}s
             </div>
@@ -738,20 +263,20 @@ export default function Chat() {
           <form onSubmit={handleSubmit} className="flex gap-3">
             <Input
               placeholder={
-                rateLimitedUntil && rateLimitSecondsLeft > 0
+                isRateLimited
                   ? `Please wait ${rateLimitSecondsLeft}s...`
-                  : "Type your message..."
+                  : `Ask about ${identity.shortName}'s work, projects, or interests...`
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
               className="flex-1 bg-background"
-              disabled={isLoading || (!!rateLimitedUntil && rateLimitSecondsLeft > 0)}
+              disabled={isLoading || isRateLimited}
+              aria-label="Message"
             />
             <Button
               type="submit"
               variant="hero"
-              disabled={!input.trim() || isLoading || (!!rateLimitedUntil && rateLimitSecondsLeft > 0)}
+              disabled={!input.trim() || isLoading || isRateLimited}
               aria-label="Send message"
             >
               <Send className="w-4 h-4" />

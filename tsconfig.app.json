@@ -23,8 +23,10 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@profile": ["./supabase/functions/_shared/profile/index.ts"],
+      "@profile/*": ["./supabase/functions/_shared/profile/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "supabase/functions/_shared/profile"]
 }

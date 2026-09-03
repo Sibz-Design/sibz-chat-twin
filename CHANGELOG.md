@@ -404,3 +404,183 @@ device's viewport height compares to the container's height.
 **Verified live** at the exact 375x812 dimensions from the reported screenshot: scrolling
 200px now correctly produces `rotateX(10deg) scale(0.8)` (50% progress) instead of staying
 stuck at the initial `rotateX(20deg) scale(0.7)`.
+
+## Interactive chat upgrade: profile knowledge base + contextual cards (2026-09-03)
+
+Rebuilt the AI chat around a single shared knowledge base so the assistant can answer
+questions about hobbies and personal interests, and so its answers can be accompanied by
+contextual visual cards. Nothing about the security layer (CORS, validation, injection
+guard, rate limiting, caching) was weakened.
+
+### The problem
+
+Siba's biography existed in three places — a hardcoded block in `src/pages/Chat.tsx`, the
+`SYSTEM_PROMPT` string array in the edge function, and `src/components/Resume.tsx` — and
+they had already drifted from one another. Projects lived in `Projects.tsx`, certificates
+in `Certificates.tsx`. There was no hobbies data anywhere, so questions like "What does
+Siba do in his free time?" reached Cohere with nothing to answer from.
+
+Intent detection was a chain of regexes inside the React component that ran *before* the
+network call and returned early, so "show me his projects" never reached the AI at all. A
+client-side `isSibaRelated` guard refused anything outside a short keyword list.
+
+### What changed
+
+**New: `supabase/functions/_shared/profile/`** — a typed knowledge base
+(`identity`, `career`, `skills`, `projects`, `hobbies`, `education`, `goals`,
+`suggestions`) that is the single source of truth. It is imported verbatim by the Deno
+edge function *and* by the React frontend through a new `@profile` alias, so the AI's
+words and the visual cards are generated from the same objects. Adding a hobby is a
+one-array edit with no chatbot logic to touch.
+
+Chosen over Supabase or a retrieval layer deliberately: the corpus is ~6KB against a
+128k-token context window, so retrieval would add a vector store and latency to solve a
+problem that does not exist, and a database would add a round-trip plus a CMS to build.
+
+**New: `_shared/intent.ts`** — weighted, deterministic intent scoring, replacing the
+component's regex chain. Weighted rather than first-match-wins so that "What does Siba do
+in his free time?" resolves to `hobbies` despite also containing the `who` phrase "what
+does Siba do". High-confidence intents are answered from profile data with no model call:
+instant, free, and impossible to hallucinate.
+
+**New: `_shared/answers.ts` / `_shared/prompt.ts`** — deterministic replies composed from
+the profile, and a system prompt generated from it. For ambiguous questions the model
+appends a `[[cards: ...]]` directive that the function strips and converts into typed card
+instructions. Preferred over Cohere tool calling, which would need a second round-trip per
+message and would bypass the response cache for the same result.
+
+**Response envelope** is now `{ text, cards, followUps, source }`. The server decides what
+to show; the frontend decides how to render it. Cards carry only a type — the frontend has
+the same profile module, so content is never shipped twice.
+
+**Frontend** — `src/pages/Chat.tsx` shrank from ~700 lines to ~260 and now holds no
+knowledge and no regexes. New `src/components/chat/`: `ProfileCard` (photo + headline),
+`HobbiesCard` (expandable icon grid), `SkillsCard` (grouped badges), `ContactCard`,
+`ExperienceCard` (role timeline), plus `ChatCards`, `MessageText`, `EmptyState`,
+`SuggestionChips`, and `AssistantMessage`. Transport moved to `src/lib/chatClient.ts`.
+
+**UX** — an "Ask me about…" starter grid replaces the bare bot icon empty state;
+follow-up chips appear under each answer, chosen server-side from the card returned; a
+time-boxed progressive reveal supplies the "being written" feel (the function returns
+complete answers, not a token stream); conversation history is now actually sent (last 8
+turns), so follow-ups have context for the first time.
+
+### Bugs found and fixed along the way
+
+- **Stale-cache bug (would have been introduced):** the prompt cache keys on message text
+  alone, so after editing a hobby, cached answers would keep serving old content for the
+  full TTL. The key now mixes in `PROFILE_VERSION`, an FNV-1a fingerprint of the profile
+  computed at module load, so any profile edit invalidates every cached answer.
+- **Unsafe Cohere response parsing:** `json.message.content[0].text` assumed the first
+  content block exists and is text. Now filters and concatenates text blocks, and returns
+  502 rather than crashing when there are none.
+- **Chat layout overflow:** `min-h-screen` with a `flex-1 overflow-auto` child let the
+  page grow past the viewport, clipping long messages and scrolling the composer off
+  screen. Now a fixed `h-dvh` column with `min-h-0` on the scroll area.
+- **Local dev CORS:** `_shared/cors.ts` allowed `localhost:8080`, but `.claude/launch.json`
+  runs the dev server on 8099, so local dev against the deployed function failed preflight.
+  Added 8099 to the defaults.
+- **Dead code removed:** the frontend's SSE streaming parser was unreachable (the function
+  has always returned plain JSON), as was the edge function's `history` support (the client
+  never sent any). `src/components/Resume.tsx` was a hardcoded duplicate of data now in the
+  profile and was replaced by `ExperienceCard`. Five `src/assets` images superseded by
+  `public/` copies were deleted.
+
+### Verification
+
+- `npm run test:intent` — new check suite, 33 intent cases plus card-directive parsing and
+  profile-integrity assertions. All pass.
+- `npx tsc -p tsconfig.app.json --noEmit` — clean.
+- `npm run lint` — 16 errors, unchanged from the pre-change baseline (all pre-existing).
+- `npm run build` — clean.
+- Browser: verified the empty state, profile card (including the missing-photo fallback),
+  hobbies card with expansion, follow-up chips, linkified email/URLs, the fixed scroll
+  layout, and mobile at 375x812.
+
+### Requires deployment
+
+The response envelope changed, so the frontend and the edge function must ship together:
+`supabase functions deploy chat`. Until that runs, the deployed function returns the old
+shape and the chat will report an unexpected response.
+
+## Hobby media: photos and video in the hobbies card (2026-09-03, cont.)
+
+Site owner supplied real hobby content and media, replacing part of the scaffolded draft.
+
+### Content
+
+Four hobbies added from details the site owner gave directly:
+
+- **Football** — Manchester City supporter, with Kaizer Chiefs and Barcelona as first
+  teams. Replaces the invented generic "Sports" draft entry.
+- **Acting & Film** — acted in a short film; has a clip and on-set photos.
+- **Sightseeing & Views** — has a video of a scenic view.
+- **Faith & Church** — attends church regularly; has a photo.
+
+The remaining four scaffolded entries (Technology & AI, Programming, Anime, Psychology,
+Personal Development) are still drafts and are now prefixed `[DRAFT]` in the data so the
+unedited ones are obvious at a glance.
+
+### Schema
+
+`MediaItem` added to `profile/types.ts` and a required `media: MediaItem[]` field added to
+`Hobby`. Three kinds are supported: `image`, `video` (with a `poster` frame), and `embed`
+for externally hosted video (YouTube/Vimeo). `alt` is required on every item.
+
+### Rendering
+
+New `src/components/chat/MediaGallery.tsx`: a thumbnail strip under each hobby blurb that
+opens a lightbox (Radix dialog) with captions, prev/next arrows, a counter, and arrow-key
+navigation. Videos are `controls`/`playsInline`/`preload="metadata"` and never autoplay —
+a clip that starts on its own inside a chat thread is an ambush. Navigating remounts the
+player via `key` so the previous clip stops.
+
+Media files are referenced by path and may not exist yet, so anything that fails to load
+is dropped from the gallery at runtime; if every item fails the strip renders nothing.
+Images are probed on mount so a broken tile never flashes before disappearing. Note that
+a missing path under Vite dev (and under the production SPA rewrite) returns 200 with
+`index.html` rather than 404 — the filtering works off the decode failure, not the status
+code, so it is correct in both environments.
+
+### Conflict fixed
+
+`goals.ts` listed "Relationship, family, health, or religious details" as off-limits,
+which would have made the AI refuse to discuss the newly added church hobby. Narrowed to
+"Relationship, family, or health details" plus "Religious or political opinions beyond
+what the profile already states" — so it can state that he attends church without being
+drawn into beliefs or politics.
+
+### Also updated
+
+- `intent.ts` — patterns for football/soccer/Man City/Kaizer Chiefs/Barcelona, acting/
+  short film/on set, church/faith/praying, and sightseeing/scenic/aesthetic view.
+- `prompt.ts` — the knowledge base now lists each hobby's media so the model can mention a
+  photo exists, with an explicit instruction never to claim media that isn't listed.
+- `suggestions.ts` — hobby follow-up chips now point at football and the short film.
+- `intent.test.ts` — 7 new intent cases (40 total) plus media-integrity assertions: every
+  item has alt text, every `src` is a path or HTTPS URL, and every video has a poster.
+- `public/hobbies/README.md` — expected filenames, ffmpeg commands for poster frames and
+  compression, and guidance on hosting video externally rather than committing anything
+  over ~10MB to the repo.
+
+### Verification
+
+`npm run test:intent` (40 cases, all pass), `tsc --noEmit` clean, `npm run lint` unchanged
+at the 16-error baseline, `npm run build` clean. Browser: verified the thumbnail strip,
+the lightbox with captions and arrows, the counter, a video correctly removing itself when
+its file is absent, and the all-media-missing state rendering nine clean tiles with no
+broken images and no console errors.
+
+### Backward-compatible response shape (deploy safety)
+
+The envelope change would otherwise have required the frontend and the edge function to
+deploy together — either one landing first leaves visitors with a broken chat until the
+other follows. `replyResponse()` in the chat function now mirrors the old
+`message.content[0].text` shape alongside the new `{ text, cards, followUps, source }`
+fields, so:
+
+- the two can be deployed in either order, with no broken window;
+- the frontend can be rolled back on its own (Vercel instant rollback) without touching
+  the edge function, which has no rollback UI of its own.
+
+The mirrored field can be deleted once the new frontend has been live for a while.

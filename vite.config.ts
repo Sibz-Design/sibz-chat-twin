@@ -22,6 +22,11 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // The portfolio knowledge base is shared verbatim between the browser and
+      // the Supabase edge function. It lives under supabase/functions/_shared so
+      // that `supabase functions deploy` bundles it; this alias lets frontend
+      // code import it as `@profile` without reaching across the tree by hand.
+      "@profile": path.resolve(__dirname, "./supabase/functions/_shared/profile"),
     },
   },
 }));

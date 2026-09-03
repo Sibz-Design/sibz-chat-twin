@@ -7,13 +7,11 @@ import { toast } from "@/hooks/use-toast";
 import heroBg from "@/assets/hero-bg.jpg";
 import sharedImage from "@/assets/shared _image.jpg";
 import ContainerScroll from "@/components/ui/container-scroll";
+import { starters } from "@profile";
 
-const suggestedQuestions = [
-  "Who is Siba?",
-  "Show me Siba's projects",
-  "What tech stack does Siba use?",
-  "Tell me about Siba's experience",
-];
+// Shares the chat's conversation starters so the hero can never offer a
+// question the chat handles differently. Four fit the two-column grid.
+const suggestedQuestions = starters.slice(0, 4).map((starter) => starter.question);
 
 export function HeroSection() {
   const [query, setQuery] = useState("");
