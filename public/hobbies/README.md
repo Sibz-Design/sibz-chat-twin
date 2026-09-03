@@ -6,17 +6,21 @@ them and everything just appears. Anything missing is skipped silently, so a
 half-filled folder never shows a broken tile.
 
 ```
-football/man-city-shirt.jpg              you in the Man City shirt
-acting/short-film.mp4                    clip from the short film
-acting/short-film-poster.jpg             a still from the clip (see below)
-acting/on-set-1.jpg                      on set
-acting/on-set-2.jpg                      on set
-sightseeing/aesthetic-view.mp4           the view clip
-sightseeing/aesthetic-view-poster.jpg    a still from that clip
-faith/praying.jpg                        praying in church
+football/man_city.jpeg              in the Man City shirt
+acting/take1.mp4                    clip from the short film
+acting/onset.jpeg                   the crew mid-scene
+acting/action.jpeg                  a scene being filmed
+acting/acting.jpeg                  behind the camera
+sightseeing/views.mp4               the view clip
+sightseeing/beach.jpeg              at the coast
+faith/church.jpeg                   during the service
 ```
 
-To use different filenames, edit the `media` array for that hobby instead.
+Filenames are not magic — they come from the `media` array for each hobby in
+`supabase/functions/_shared/profile/hobbies.ts`. Rename a file and update it
+there, or add a new entry. `npm run test:intent` checks every referenced path
+actually exists under `public/`, so a typo fails the suite instead of silently
+showing nothing.
 
 ## Posters
 
