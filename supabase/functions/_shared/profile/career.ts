@@ -8,14 +8,14 @@ export const roles: Role[] = [
     period: "April 2026 – Present",
     current: true,
     summary:
-      "Technical Support Specialist for Clickatell's enterprise and developer customers, covering SMS and API messaging services. Promoted to Enterprise Support Agent from Customer Support Agent.",
+      "Technical Support Specialist for Clickatell's enterprise and developer customers, covering SMS and API messaging services.",
     highlights: [
       "Troubleshoots delivery failures using system logs, delivery reports, and error codes.",
       "Supports customers with platform usage, API configuration, sender ID registration, short codes, and IP whitelisting.",
       "Escalates complex technical and network issues to Technical, NOC, and Vendor teams with detailed diagnostics.",
       "Translates technical issues into clear customer-facing explanations, progress updates, and resolutions.",
       "Logs and tracks incidents in Jira to maintain SLA compliance and reduce repeat contacts.",
-      "Promoted from Customer Support Agent to Enterprise Support Agent, taking on Clickatell's enterprise accounts.",
+      "Recently promoted into the Enterprise Support Agent role, taking on Clickatell's enterprise accounts.",
     ],
   },
   {
