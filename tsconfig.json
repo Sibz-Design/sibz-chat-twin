@@ -7,7 +7,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@profile": ["./supabase/functions/_shared/profile/index.ts"],
+      "@profile/*": ["./supabase/functions/_shared/profile/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
