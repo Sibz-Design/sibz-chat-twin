@@ -83,8 +83,8 @@ mistake. Split into two correct tags.
 
 ### `cd909be` — Use the site's own logo for social-share previews
 **File:** `index.html`
-`og:image`/`twitter:image` pointed to Lovable's own placeholder OG image, and
-`twitter:site` was set to `@lovable_dev` — none of which belong to this site. Switched to
+`og:image`/`twitter:image` pointed at the starter template's placeholder OG image, and
+`twitter:site` carried the template vendor's handle — none of which belong to this site. Switched to
 the site's own logo (`public/logo_sd.png`, already used as the favicon) and removed the
 unrelated `twitter:site` handle. Per site-owner decision.
 

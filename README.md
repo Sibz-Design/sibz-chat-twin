@@ -210,11 +210,6 @@ supabase functions serve --env-file .env.local
 
 ### Development Workflows
 
-#### 🎨 Using Lovable (Frontend Only)
-1. Visit the [Lovable Project](https://lovable.dev/projects/e791dbaa-a198-4ab5-af65-ce3d52bb3615)
-2. Make frontend changes through prompts
-3. Changes sync automatically to the repository
-
 #### 💻 Full Stack Local Development
 1. Set up Supabase locally with `supabase start`
 2. Configure environment variables
@@ -313,10 +308,11 @@ All of these are Edge Function secrets (`supabase secrets set NAME=value`), not 
 
 ## 🚢 Deployment
 
-### Frontend Deployment (Lovable)
-1. Open [Lovable](https://lovable.dev/projects/e791dbaa-a198-4ab5-af65-ce3d52bb3615)
-2. Click **Share** → **Publish**
-3. Your frontend will be deployed instantly
+### Frontend Deployment (Vercel)
+1. Push to `main`. Vercel builds and deploys the branch automatically.
+2. To deploy by hand instead, run `npm run build` and upload `dist/`.
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Vercel project's
+   environment variables, otherwise the chat cannot reach its backend.
 
 ### Live Demo
 - Deployed at [`sibz-chat-twin.vercel.app`](https://sibz-chat-twin.vercel.app/)
@@ -381,7 +377,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **[Cohere AI](https://cohere.ai/)** for the powerful language model
 - **[Supabase](https://supabase.com/)** for the excellent backend platform
-- **[Lovable](https://lovable.dev/)** for the development platform
 - **[shadcn/ui](https://ui.shadcn.com/)** for the beautiful components
 
 ## 🆘 Support
