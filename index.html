@@ -17,9 +17,17 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://sibz-chat-twin.vercel.app/logo_sd.png" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/logo_sd.png" />
-    <link rel="apple-touch-icon" href="/logo_sd.png" />
+    <!--
+      Favicons. These point at the composited tiles in public/, not at
+      logo_sd.png directly: the raw logo is a near-black mark on a transparent
+      background, so it disappears against a dark browser tab or a dark
+      dashboard. The tiles put the same mark on a light rounded ground, which
+      reads on both. logo_sd.png is still the social-share image above, where a
+      large transparent PNG is fine.
+    -->
+    <link rel="icon" type="image/png" sizes="180x180" href="/favicon.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
   </head>
 
   <body>
