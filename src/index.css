@@ -68,3 +68,19 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  /*
+   * Hides the scrollbar while leaving the element scrollable, for the
+   * horizontal swipe strips where a visible bar would sit on top of the
+   * content and read as a rendering fault rather than an affordance.
+   * Keyboard and touch scrolling are unaffected.
+   */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

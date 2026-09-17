@@ -121,25 +121,38 @@ export function HeroSection() {
         ))}
       </div>
 
-      {/* CTAs */}
-      <div className="flex items-center justify-center gap-3">
-        <Button asChild variant="outline">
-          <a href="https://drive.google.com/drive/folders/1ubhYNykU6iMgzSvxeix6WpdfVniZGc5A?usp=sharing" target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-4 h-4" />
-            Certificates
-          </a>
-        </Button>
-        <Button variant="hero" onClick={scrollToContact}>
-          <Mail className="w-4 h-4" />
-          Contact Me
-        </Button>
-        <Button asChild variant="outline">
-          <Link to="/chat?show_badges=true">
-            <ExternalLink className="w-4 h-4" />
-            Badges
-          </Link>
-        </Button>
-        <DownloadCV variant="outline" size="default" />
+      {/*
+        CTAs. The four buttons are wider than a phone screen, and the card that
+        holds them clips its overflow, so on mobile the outer ones used to be
+        cut off with no way to reach them. The row is now a horizontal swipe
+        strip instead.
+
+        `w-max mx-auto` on the inner row does the responsive work without a
+        breakpoint: while the buttons fit, the auto margins centre them exactly
+        as before; once they do not, the auto margins collapse to zero, the row
+        starts flush left, and the overflow becomes scrollable. Snapping is
+        proximity rather than mandatory so a half-swipe is not yanked back.
+      */}
+      <div className="w-full overflow-x-auto overscroll-x-contain no-scrollbar snap-x scroll-px-1">
+        <div className="flex w-max mx-auto items-center gap-3 px-1">
+          <Button asChild variant="outline" className="shrink-0 snap-start">
+            <a href="https://drive.google.com/drive/folders/1ubhYNykU6iMgzSvxeix6WpdfVniZGc5A?usp=sharing" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4" />
+              Certificates
+            </a>
+          </Button>
+          <Button variant="hero" onClick={scrollToContact} className="shrink-0 snap-start">
+            <Mail className="w-4 h-4" />
+            Contact Me
+          </Button>
+          <Button asChild variant="outline" className="shrink-0 snap-start">
+            <Link to="/chat?show_badges=true">
+              <ExternalLink className="w-4 h-4" />
+              Badges
+            </Link>
+          </Button>
+          <DownloadCV variant="outline" size="default" className="shrink-0 snap-start" />
+        </div>
       </div>
     </div>
   </ContainerScroll>
