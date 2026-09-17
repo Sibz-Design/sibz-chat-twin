@@ -110,12 +110,24 @@ export default function ContainerScroll({ titleComponent, children }: ContainerS
   const scale = scaleRange[0] + (scaleRange[1] - scaleRange[0]) * progress;
   const translateY = -100 * progress;
 
+  // Both sizing rules below exist to stop the hero portrait being sliced on
+  // phones. The hero section that wraps this clips anything that escapes it, so
+  // overflow here is not merely hidden off-screen - it is cut off mid-image.
+  //
+  // `min-h` rather than a fixed `h`: on a narrow screen the title block wraps to
+  // enough lines that it plus the card is taller than 50rem. A fixed height made
+  // that surplus overflow a centred flex box, which pushed the top of the header
+  // - where the portrait sits - above the section and cropped it.
+  //
+  // `pt-28` rather than `py-10` on mobile: the header is translated up by as
+  // much as 100px at full scroll progress, and the desktop `py-40` already
+  // absorbs that while 10 (40px) did not.
   return (
     <div
       ref={containerRef}
-      className="h-[50rem] md:h-[60rem] flex items-center justify-center relative p-2 md:p-20"
+      className="min-h-[50rem] md:min-h-[60rem] flex items-center justify-center relative p-2 md:p-20"
     >
-      <div className="w-full relative py-10 md:py-40" style={{ perspective: "1000px" }}>
+      <div className="w-full relative pt-28 pb-10 md:py-40" style={{ perspective: "1000px" }}>
         <Header translateY={translateY} titleComponent={titleComponent} />
         <Card rotateX={rotateX} scale={scale}>
           {children}
